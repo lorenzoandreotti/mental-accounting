@@ -9,9 +9,9 @@ public sealed class SimulationsModel(AccountingService service, IDataProtectionP
     [BindProperty] public string Name { get; set; } = "";
     [BindProperty] public DateOnly Through { get; set; }
     [BindProperty] public InterestMethod Method { get; set; }
-    [BindProperty] public string FutureMovements { get; set; } = "";
-    [BindProperty] public string FutureRates { get; set; } = "";
-    [BindProperty] public string FutureTaxes { get; set; } = "";
+    [BindProperty] public List<MovementInput> FutureMovements { get; set; } = [];
+    [BindProperty] public List<ConditionInput> FutureRates { get; set; } = [];
+    [BindProperty] public List<ConditionInput> FutureTaxes { get; set; } = [];
     [BindProperty] public string ScenarioTicket { get; set; } = "";
     public CalculationResult? Result { get; set; }
     public CalculationResult? Comparison { get; set; }
@@ -24,12 +24,20 @@ public sealed class SimulationsModel(AccountingService service, IDataProtectionP
     }
     public async Task<IActionResult> OnPostAsync()
     {
-        await Load(); if(!ModelState.IsValid)return Page();
+        await Load();
+        GridInputValidation.Conditions(FutureRates,nameof(FutureRates),ModelState,Today);
+        GridInputValidation.Conditions(FutureTaxes,nameof(FutureTaxes),ModelState,Today);
+        foreach(var row in FutureMovements.Where(x=>x.Date<=Today)) ModelState.AddModelError($"FutureMovements[{row.Key}].Date","Usare una data successiva a oggi.");
+        foreach(var row in FutureMovements.Where(x=>x.Amount.HasValue && InterestCalculator.Money(x.Amount.Value)!=x.Amount.Value)) ModelState.AddModelError($"FutureMovements[{row.Key}].Amount","Inserire un importo in centesimi.");
+        if(FutureMovements.Count>1000 || FutureMovements.Select(x=>x.Key).Distinct().Count()!=FutureMovements.Count) ModelState.AddModelError(nameof(FutureMovements),"Troppe righe o identificativi duplicati.");
+        if(!ModelState.IsValid)return Page();
         try
         {
             if(Through<Today)throw new BusinessException("Scegli una data finale uguale o successiva a oggi.");
             var ledger=RequireLedger();
-            var moves=EntryParser.Movements(FutureMovements); var rates=EntryParser.Rates(FutureRates); var taxes=EntryParser.Taxes(FutureTaxes);
+            var moves=FutureMovements.Select(x=>new Movement(Guid.NewGuid(),x.Date!.Value,x.Kind!.Value,x.Amount!.Value,x.Note)).ToList();
+            var rates=FutureRates.Select(x=>new RateChange(x.From!.Value,x.Percentage!.Value/100)).ToList();
+            var taxes=FutureTaxes.Select(x=>new TaxChange(x.From!.Value,x.Percentage!.Value/100)).ToList();
             if(moves.Any(x=>x.Date<=Today)||rates.Any(x=>x.From<=Today)||taxes.Any(x=>x.From<=Today))
                 throw new BusinessException("Le ipotesi aggiuntive devono avere date successive a oggi.");
             var forecast=ledger with { Movements=[..ledger.Movements,..moves], Rates=[..ledger.Rates,..rates], Taxes=[..ledger.Taxes,..taxes] };

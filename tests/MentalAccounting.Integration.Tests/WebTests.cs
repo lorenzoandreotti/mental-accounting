@@ -32,7 +32,7 @@ public sealed class WebTests
         var settings=await client.GetStringAsync("/Settings");
         var data=new Dictionary<string,string>{{"__RequestVerificationToken",Field(settings,"__RequestVerificationToken")},{"Version","0"},{"Start","2026-01-01"},
             {"Balance","1000,00"},{"Gross","0"},{"Tax","0"},{"Basis","Actual365"},{"Months","1"},{"Civil","true"},{"Timing","NextMonthFirst"},{"CreditDay","1"},
-            {"Rates","2026-01-01;2,5"},{"Taxes","2026-01-01;26"}};
+            {"Rates.Index","r1"},{"Rates[r1].Key","r1"},{"Rates[r1].From","2026-01-01"},{"Rates[r1].Percentage","2,5"},{"Taxes.Index","t1"},{"Taxes[t1].Key","t1"},{"Taxes[t1].From","2026-01-01"},{"Taxes[t1].Percentage","26"}};
         var response=await client.PostAsync("/Settings",new FormUrlEncodedContent(data));Assert.Equal(HttpStatusCode.OK,response.StatusCode);
         var review=await response.Content.ReadAsStringAsync();Assert.Contains("Conferma la modifica",review);
         response=await Confirm(client,"/Settings",review);Assert.Equal(HttpStatusCode.Redirect,response.StatusCode);
@@ -51,7 +51,7 @@ public sealed class WebTests
     {
         foreach(Match match in Regex.Matches(html,"<input[^>]+>"))
             if(Regex.IsMatch(match.Value,$"name=\"{Regex.Escape(name)}\""))
-                return WebUtility.HtmlDecode(Regex.Match(match.Value,"value=\"([^\"]*)\"").Groups[1].Value);
+                return WebUtility.HtmlDecode(Regex.Match(match.Value,"\\svalue=\"([^\"]*)\"").Groups[1].Value);
         throw new InvalidOperationException($"Campo {name} non trovato: {html}");
     }
     [Fact] public async Task SimulationSaveAndRestoreRequireConfirmationAndDoNotChangeBalance()
@@ -66,7 +66,7 @@ public sealed class WebTests
         var page=await client.GetStringAsync("/Simulations");
         var response=await client.PostAsync("/Simulations",new FormUrlEncodedContent(new Dictionary<string,string>{
             {"__RequestVerificationToken",Field(page,"__RequestVerificationToken")},{"Through","2027-10-22"},{"Name","Vacanze"},{"Method","Simple"},
-            {"FutureMovements","2027-01-01;versamento;100"},{"FutureRates",""},{"FutureTaxes",""}}));
+            {"FutureMovements.Index","m1"},{"FutureMovements[m1].Key","m1"},{"FutureMovements[m1].Date","2027-01-01"},{"FutureMovements[m1].Kind","Deposit"},{"FutureMovements[m1].Amount","100"}}));
         var simulation=await response.Content.ReadAsStringAsync();Assert.Contains("Saldo con il metodo selezionato",simulation);
         using(var scope=factory.Services.CreateScope())Assert.Empty((await scope.ServiceProvider.GetRequiredService<IAccountStore>().Load()).Document.Scenarios);
         response=await client.PostAsync("/Simulations?handler=Save",new FormUrlEncodedContent(new Dictionary<string,string>{

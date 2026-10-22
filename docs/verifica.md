@@ -21,3 +21,15 @@ Verifiche eseguite il 22 ottobre 2026 con SDK .NET 10.0.402 e PostgreSQL 17.11 t
 - Ripetere una prova di ripristino con i volumi e il reverse proxy della destinazione prima della pubblicazione.
 
 Il foglio originale non è stato modificato né incluso nel repository. Nell'importazione vengono riconosciuti e segnalati i prelievi negativi; gli interessi e consolidamenti del foglio non vengono usati come risultati corretti.
+
+## Aggiornamento interfaccia Tailwind
+
+- Bootstrap e jQuery rimossi; pagine convertite a Tailwind CSS compilato localmente con lockfile npm.
+- Tema Sistema/Chiaro/Scuro applicato nel `head`, con preferenza locale e funzionamento anche senza accesso allo storage.
+- Griglie per tutte le tabelle, inclusi intero storico in Panoramica, anteprime, condizioni e ipotesi delle simulazioni. Filtri prima della paginazione, ordinamento numerico esatto e identificativi stabili dei moduli.
+- **37 test .NET superati**: 17 di dominio, 6 applicativi, 14 di integrazione. Inclusi PostgreSQL sul solo database dedicato `accounting_test`, Identity e lettura del foglio personale.
+- **11 test JavaScript Vitest/jsdom superati**: tema, ordinamento date/numeri, filtri combinati, paginazione, aggiunta/rimozione, invio di righe nascoste e focus su righe modificate/non valide.
+- Test HTTP aggiuntivi: 13 condizioni salvate dopo conferma, percentuali italiane, righe incomplete, decorrenze duplicate e mantenimento dei valori in caso di errore. Panoramica ed esportazione comprendono più di otto movimenti.
+- Pubblicazione Release riuscita con CSS e moduli JavaScript inclusi. Nessuna migrazione o modifica al formato dei backup.
+- Le verifiche sono state eseguite in Release perché la copia Debug dell'utente era in esecuzione; nessun processo dell'utente è stato fermato.
+- Il controllo visivo desktop/mobile e da tastiera nel browser resta da eseguire: nessun browser è collegato agli strumenti disponibili. I test DOM non sostituiscono il controllo visivo. Anche la build Docker resta da verificare su una macchina con Docker disponibile.

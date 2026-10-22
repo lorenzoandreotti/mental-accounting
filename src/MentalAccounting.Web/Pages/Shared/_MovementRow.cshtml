@@ -1,0 +1,24 @@
+@model MentalAccounting.Web.Pages.MovementRow
+@using MentalAccounting.Domain
+@{var prefix=$"{Model.Prefix}[{Model.Row.Key}]";}
+<tr data-row-key="@Model.Row.Key">
+    <td>
+        <input type="hidden" name="@(Model.Prefix).Index" value="@Model.Row.Key"/>
+        <input type="hidden" name="@(prefix).Key" value="@Model.Row.Key"/>
+        @Html.TextBox($"{prefix}.Date",Model.Row.Date?.ToString("yyyy-MM-dd"),new {type="date",@class="field",required="required",aria_label="Data movimento",data_grid_value=""})
+        @Html.ValidationMessage($"{prefix}.Date")
+    </td>
+    <td>
+        @Html.DropDownList($"{prefix}.Kind",Enum.GetValues<MovementKind>().Select(x=>new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(Labels.Movement(x),x.ToString(),x==Model.Row.Kind)),new {@class="field",aria_label="Tipo movimento",data_grid_value=""})
+        @Html.ValidationMessage($"{prefix}.Kind")
+    </td>
+    <td>
+        @Html.TextBox($"{prefix}.Amount",Model.Row.Amount,new {@class="field",inputmode="decimal",required="required",aria_label="Importo movimento",data_grid_value=""})
+        @Html.ValidationMessage($"{prefix}.Amount")
+    </td>
+    <td>
+        @Html.TextBox($"{prefix}.Note",Model.Row.Note,new {@class="field",maxlength="500",aria_label="Nota movimento",data_grid_value=""})
+        @Html.ValidationMessage($"{prefix}.Note")
+    </td>
+    <td><button type="button" class="button button-small button-danger" data-remove-row aria-label="Rimuovi movimento ipotetico">Rimuovi</button></td>
+</tr>

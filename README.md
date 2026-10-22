@@ -8,7 +8,7 @@ Webapp personale per un accantonamento virtuale in euro: movimenti, tassi storic
 - [Verifiche e limiti dell'ambiente](docs/verifica.md)
 
 ## Sviluppo
-Richiede SDK .NET 10 e PostgreSQL 17 (anche locale). Configurare `ConnectionStrings__Accounting` nell'ambiente, senza mettere password nei file versionati.
+Richiede SDK .NET 10, Node.js 24 LTS (o versione compatibile successiva) con npm e PostgreSQL 17 (anche locale). Configurare `ConnectionStrings__Accounting` nell'ambiente, senza mettere password nei file versionati.
 
 ```sh
 dotnet restore
@@ -22,6 +22,32 @@ dotnet test
 ```
 
 `create-user` crea l'unico account (nome predefinito `admin`, configurabile con `ADMIN_USERNAME`), chiedendo la password senza mostrarla. `reset-password` reimposta la password e sblocca l'account. È possibile fornire `ADMIN_PASSWORD` tramite ambiente per automazione, rimuovendola subito dopo. Nessun servizio email richiesto. Usare HTTPS anche in sviluppo per i cookie Secure.
+
+## Interfaccia e sviluppo degli stili
+
+L'interfaccia usa Tailwind CSS, senza Bootstrap, jQuery o dipendenze CDN. Il selettore Sistema/Chiaro/Scuro è disponibile anche nel login; la preferenza viene ricordata solo nel browser del dispositivo.
+
+`dotnet build`, `dotnet run` e `dotnet publish` installano automaticamente le dipendenze npm con `npm ci` quando necessario e compilano `Styles/app.css` in `wwwroot/css/site.css`. Il CSS compilato è versionato per renderne verificabile l'output; modificare il sorgente in `Styles`, non il file generato. Gli script dei componenti sono in `wwwroot/js`. Il lockfile npm rende riproducibile l'installazione.
+
+Durante le modifiche agli stili, in un secondo terminale:
+
+```powershell
+cd src/MentalAccounting.Web
+npm.cmd run css:watch
+```
+
+Per i test JavaScript e la compilazione manuale:
+
+```powershell
+cd src/MentalAccounting.Web
+npm.cmd ci
+npm.cmd test
+npm.cmd run css:build
+```
+
+Su Linux/macOS usare `npm` al posto di `npm.cmd`. Nel Dockerfile uno stage Node compila il CSS prima della pubblicazione .NET; il container finale non contiene Node. `SkipUiBuild=true` è riservato a pipeline che hanno già prodotto il CSS.
+
+Le griglie offrono filtri per colonna, ordinamento e pagine da 10/25/50 righe. Il pulsante Filtri per colonna espone i controlli; Azzera filtri ripristina l'intero insieme. I riepiloghi e le esportazioni restano complessivi. Nelle griglie modificabili tutte le righe non eliminate vengono salvate, anche quando nascoste dai filtri o dalla paginazione. Le modifiche restano soggette ad anteprima e conferma. Le percentuali accettano la virgola italiana; non sono più necessarie righe di testo separate da punto e virgola.
 
 ## Pubblicazione su Linux
 

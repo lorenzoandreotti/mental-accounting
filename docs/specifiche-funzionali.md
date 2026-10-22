@@ -23,6 +23,9 @@ Dashboard con saldo disponibile, maturato lordo, imposta e netto, incluso il mat
 
 Esportazione CSV dei movimenti e riepiloghi; backup JSON versionato e ripristino con anteprima. Backup applicativo senza account/password. Gli scenari vengono inclusi nel backup.
 
+## Interfaccia
+Tema Sistema/Chiaro/Scuro, con default Sistema e scelta ricordata nel browser. Tassi, aliquote e ipotesi future vengono inseriti tramite griglie con aggiunta/rimozione di righe. Tutte le griglie dati supportano ordinamento, filtri combinati per colonna e paginazione 10/25/50 righe; la Panoramica consulta l'intero storico. I filtri non cambiano i totali contabili, i dati esportati o le righe inviate alla conferma. Le validazioni mantengono i valori e indicano le righe da correggere. Nessun salvataggio implicito.
+
 ## Default
 Nell'importazione sono accettati anche prelievi/addebiti con segno negativo, normalizzati a importo positivo con segnalazione. Si eliminano esclusivamente residui binari Excel inferiori a 0,00000001 euro rispetto al centesimo; vere frazioni di centesimo restano errori.
 

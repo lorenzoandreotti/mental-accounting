@@ -1,0 +1,5 @@
+@model List<MentalAccounting.Web.Pages.ConditionInput>
+@using System.Globalization
+<div data-grid data-sort="0:desc" aria-label="Condizioni proposte"><div class="table-scroll"><table class="data-table"><thead><tr><th data-type="date">Decorrenza</th><th data-type="number">Percentuale (%)</th></tr></thead><tbody>
+@foreach(var r in Model){<tr><td data-value="@r.From?.ToString("yyyy-MM-dd")">@r.From?.ToString("dd/MM/yyyy")</td><td data-value="@r.Percentage?.ToString(CultureInfo.InvariantCulture)">@r.Percentage?.ToString("N4")%</td></tr>}
+</tbody></table></div></div>

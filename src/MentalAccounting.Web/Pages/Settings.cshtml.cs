@@ -15,24 +15,26 @@ public sealed class SettingsModel(AccountingService service, IDataProtectionProv
     [BindProperty] public DateOnly? Anchor { get; set; }
     [BindProperty] public CreditTiming Timing { get; set; }
     [BindProperty] public int CreditDay { get; set; } = 1;
-    [BindProperty] public string Rates { get; set; } = "";
-    [BindProperty] public string Taxes { get; set; } = "";
+    [BindProperty] public List<ConditionInput> Rates { get; set; } = [];
+    [BindProperty] public List<ConditionInput> Taxes { get; set; } = [];
     public async Task OnGetAsync()
     {
         await Load(); Start = Today;
-        if (State.Document.Ledger is not {} l) return;
+        if (State.Document.Ledger is not {} l) { Rates.Add(new() { From=Today }); Taxes.Add(new() { From=Today }); return; }
         Start=l.Start; Balance=l.OpeningBalance; Gross=l.OpeningGross; Tax=l.OpeningTax; Basis=l.Basis;
         Months=l.Calendar.Months; Civil=l.Calendar.Civil; Anchor=l.Calendar.Anchor; Timing=l.Calendar.Timing; CreditDay=l.Calendar.CreditDay;
-        Rates=EntryParser.Format(l.Rates); Taxes=EntryParser.Format(l.Taxes);
+        Rates=l.Rates.Select(x=>new ConditionInput { From=x.From, Percentage=x.Rate*100 }).ToList(); Taxes=l.Taxes.Select(x=>new ConditionInput { From=x.From, Percentage=x.Rate*100 }).ToList();
     }
     public async Task<IActionResult> OnPostAsync()
     {
         var version=Version; await Load();
+        GridInputValidation.Conditions(Rates, nameof(Rates), ModelState);
+        GridInputValidation.Conditions(Taxes, nameof(Taxes), ModelState);
         if (!ModelState.IsValid) return Page();
         try
         {
             var ledger = new Ledger(Start, Balance, Gross, Tax, Basis, new(Months,Civil,Anchor,Timing,CreditDay),
-                State.Document.Ledger?.Movements ?? [], EntryParser.Rates(Rates), EntryParser.Taxes(Taxes));
+                State.Document.Ledger?.Movements ?? [], Rates.Select(x=>new RateChange(x.From!.Value,x.Percentage!.Value/100)).ToList(), Taxes.Select(x=>new TaxChange(x.From!.Value,x.Percentage!.Value/100)).ToList());
             return await Preview(State.Document with { Ledger=ledger }, version);
         }
         catch(Exception e) when(e is BusinessException or ConcurrencyException) { return Failure(e); }

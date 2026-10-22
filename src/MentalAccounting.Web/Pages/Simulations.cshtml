@@ -1,18 +1,21 @@
-@page
+﻿@page
 @model MentalAccounting.Web.Pages.SimulationsModel
 @using MentalAccounting.Domain
+@using MentalAccounting.Web.Pages
 @{ViewData["Title"]="Simulazioni";}
-<p class="eyebrow">UNO SGUARDO AVANTI</p><h1>Simulazioni</h1><p class="text-secondary">Prova versamenti e condizioni future. Il saldo effettivo resta invariato; gli scenari salvati conservano i dati usati al momento del calcolo.</p>
-<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<p class="eyebrow">UNO SGUARDO AVANTI</p><h1>Simulazioni</h1><p class="muted">Prova versamenti e condizioni future. Gli scenari salvati conservano i dati usati al momento del calcolo.</p>
+<div asp-validation-summary="All" class="validation" role="alert"></div>
 @if(Model.Review is {} review){<partial name="_Review" model="review"/>}else{
-<form method="post" class="card card-body mb-4"><div class="row g-3"><div class="col-md-4"><label asp-for="Name" class="form-label">Nome scenario</label><input asp-for="Name" class="form-control" maxlength="100"/></div><div class="col-md-4"><label asp-for="Through" class="form-label">Data finale</label><input asp-for="Through" type="date" class="form-control"/></div><div class="col-md-4"><label asp-for="Method" class="form-label">Metodo da analizzare</label><select asp-for="Method" class="form-select"><option value="Simple">Interesse semplice</option><option value="Compound">Interesse composto equivalente</option></select></div>
-<div class="col-12"><label asp-for="FutureMovements" class="form-label">Movimenti ipotetici aggiuntivi</label><textarea asp-for="FutureMovements" rows="4" class="form-control font-monospace" placeholder="2027-01-10;versamento;100;Risparmio mensile"></textarea><small>Una riga: data;versamento/prelievo/addebito;importo;nota facoltativa. Solo date future.</small></div>
-<div class="col-md-6"><label asp-for="FutureRates" class="form-label">Nuovi tassi futuri (%)</label><textarea asp-for="FutureRates" rows="3" class="form-control font-monospace" placeholder="2027-01-01;2,5"></textarea></div><div class="col-md-6"><label asp-for="FutureTaxes" class="form-label">Nuove aliquote future (%)</label><textarea asp-for="FutureTaxes" rows="3" class="form-control font-monospace" placeholder="2027-01-01;26"></textarea></div></div><button class="btn btn-primary mt-3 align-self-start">Calcola e confronta</button></form>
-@if(Model.Result is {} r){<section class="mb-4"><h2>@Model.ResultName</h2><p>Metodo: @(Model.Method==InterestMethod.Simple?"semplice":"composto equivalente") · Data finale: @r.AsOf.ToString("dd/MM/yyyy")</p>
-@if(Model.Comparison is {} c){<p class="comparison">Saldo con il metodo selezionato: <strong>@r.Balance.ToString("C")</strong> · Con il metodo alternativo: <strong>@c.Balance.ToString("C")</strong><br/>Netto non accreditato: @r.AccruedNet.ToString("C") contro @c.AccruedNet.ToString("C").</p>}
-@if(!string.IsNullOrEmpty(Model.ScenarioTicket)){<form method="post" asp-page-handler="Save" class="mb-3"><input asp-for="ScenarioTicket" type="hidden"/><button class="btn btn-outline-primary">Salva questo scenario</button></form>}
+<form method="post" class="panel mb-5 space-y-6"><div class="grid gap-4 sm:grid-cols-3">
+<div><label asp-for="Name" class="field-label">Nome scenario</label><input asp-for="Name" class="field" maxlength="100"/></div><div><label asp-for="Through" class="field-label">Data finale</label><input asp-for="Through" type="date" class="field"/></div><div><label asp-for="Method" class="field-label">Metodo da analizzare</label><select asp-for="Method" class="field"><option value="Simple">Interesse semplice</option><option value="Compound">Interesse composto equivalente</option></select></div></div>
+<p class="text-xs muted">Le ipotesi aggiuntive devono avere date successive a oggi. Le percentuali sono espresse in punti percentuali: 2 significa 2%.</p>
+<partial name="_EditorGrid" model='new EditorGrid("FutureMovements","Movimenti ipotetici",Movements:Model.FutureMovements)'/>
+<partial name="_EditorGrid" model='new EditorGrid("FutureRates","Nuovi tassi futuri",Model.FutureRates)'/>
+<partial name="_EditorGrid" model='new EditorGrid("FutureTaxes","Nuove aliquote future",Model.FutureTaxes)'/>
+<button class="button button-primary">Calcola e confronta</button></form>
+@if(Model.Result is {} r){<section class="mb-5"><h2>@Model.ResultName</h2><p class="text-sm muted">Metodo: @(Model.Method==InterestMethod.Simple?"semplice":"composto equivalente") · Data finale: @r.AsOf.ToString("dd/MM/yyyy")</p>
+@if(Model.Comparison is {} c){<p class="notice">Saldo con il metodo selezionato: <strong>@r.Balance.ToString("C")</strong> · Con il metodo alternativo: <strong>@c.Balance.ToString("C")</strong><br/>Netto non accreditato: @r.AccruedNet.ToString("C") contro @c.AccruedNet.ToString("C").</p>}
+@if(!string.IsNullOrEmpty(Model.ScenarioTicket)){<form method="post" asp-page-handler="Save" class="mb-4"><input asp-for="ScenarioTicket" type="hidden"/><button class="button">Salva questo scenario</button></form>}
 <partial name="_Calculation" model="r"/></section>}
-<section class="card card-body"><h2>Scenari salvati</h2>@if(Model.State.Document.Scenarios.Count==0){<p>Nessuno scenario salvato.</p>}
-@foreach(var s in Model.State.Document.Scenarios){<div class="d-flex flex-wrap gap-3 align-items-center mb-2"><a asp-route-id="@s.Id">@s.Name · @s.Through.ToString("dd/MM/yyyy")</a><form method="post" asp-page-handler="Delete"><input name="Version" value="@Model.State.Version" type="hidden"/><input name="id" value="@s.Id" type="hidden"/><button class="btn btn-sm btn-outline-danger">Elimina</button></form></div>}
-</section>
+<section class="panel"><h2>Scenari salvati</h2><partial name="_ScenarioTable" model="new ScenarioGrid(Model.State.Document.Scenarios,true,Model.State.Version)"/></section>
 }

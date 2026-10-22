@@ -1,0 +1,15 @@
+@model MentalAccounting.Web.Pages.ConditionRow
+@{var prefix=$"{Model.Prefix}[{Model.Row.Key}]";}
+<tr data-row-key="@Model.Row.Key">
+    <td>
+        <input type="hidden" name="@(Model.Prefix).Index" value="@Model.Row.Key"/>
+        <input type="hidden" name="@(prefix).Key" value="@Model.Row.Key"/>
+        @Html.TextBox($"{prefix}.From",Model.Row.From?.ToString("yyyy-MM-dd"),new {type="date",@class="field",required="required",aria_label="Decorrenza",data_grid_value=""})
+        @Html.ValidationMessage($"{prefix}.From")
+    </td>
+    <td>
+        @Html.TextBox($"{prefix}.Percentage",Model.Row.Percentage,new {@class="field",inputmode="decimal",required="required",aria_label="Percentuale",data_grid_value=""})
+        @Html.ValidationMessage($"{prefix}.Percentage")
+    </td>
+    <td><button type="button" class="button button-small button-danger" data-remove-row aria-label="Rimuovi condizione">Rimuovi</button></td>
+</tr>

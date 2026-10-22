@@ -1,0 +1,34 @@
+@model MentalAccounting.Web.Pages.EditorGrid
+@using MentalAccounting.Web.Pages
+<section class="min-w-0" data-grid data-editor data-sort="0:desc" aria-label="@Model.Title">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <h3 class="mb-0">@Model.Title</h3>
+        <button type="button" class="button button-small" data-add-row>Aggiungi riga</button>
+    </div>
+    <div class="table-scroll">
+        <table class="data-table grid-edit">
+            <thead><tr>
+            @if(Model.Conditions is not null) {
+                <th data-type="date">Decorrenza</th><th data-type="number">Percentuale (%)</th>
+            } else {
+                <th data-type="date">Data</th><th data-type="select">Tipo</th><th data-type="number">Importo (€)</th><th data-type="text">Nota</th>
+            }
+            <th data-type="none">Azioni</th></tr></thead>
+            <tbody>
+                @if(Model.Conditions is {} conditions) {
+                    foreach(var row in conditions) { <partial name="_ConditionRow" model="new ConditionRow(Model.Prefix,row)"/> }
+                } else if(Model.Movements is {} movements) {
+                    foreach(var row in movements) { <partial name="_MovementRow" model="new MovementRow(Model.Prefix,row)"/> }
+                }
+            </tbody>
+        </table>
+    </div>
+    <template data-row-template>
+        @if(Model.Conditions is not null) {
+            <partial name="_ConditionRow" model='new ConditionRow(Model.Prefix,new() { Key="__key__" })'/>
+        } else {
+            <partial name="_MovementRow" model='new MovementRow(Model.Prefix,new() { Key="__key__" })'/>
+        }
+    </template>
+    <noscript><p class="notice">Attiva JavaScript per aggiungere righe, filtrare e ordinare. Le righe esistenti restano modificabili.</p></noscript>
+</section>

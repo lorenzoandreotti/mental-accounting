@@ -1,7 +1,11 @@
 # Architettura
 
 ## Stack
-.NET 10 LTS, ASP.NET Core Razor Pages, Bootstrap locale, EF Core/Npgsql, PostgreSQL, ASP.NET Core Identity, ClosedXML per lettura XLSX, xUnit. Un'applicazione server, nessuna API pubblica o frontend separato. Docker Compose su Linux dietro reverse proxy esterno HTTPS.
+.NET 10 LTS, ASP.NET Core Razor Pages, Tailwind CSS compilato localmente, EF Core/Npgsql, PostgreSQL, ASP.NET Core Identity, ClosedXML per lettura XLSX, xUnit. Un'applicazione server, nessuna API pubblica o frontend separato. Docker Compose su Linux dietro reverse proxy esterno HTTPS.
+
+La build UI usa npm/CLI Tailwind con lockfile e target MSBuild. Lo stage Node nel Dockerfile è separato dal runtime .NET. Componenti di stile condivisi in `Styles/app.css`; JavaScript ES modules per griglie, menu responsive e tema applicato prima del rendering. Nessun framework frontend o CDN. Vitest/jsdom verifica i comportamenti del DOM.
+
+Le righe dei moduli sono collezioni C# tipizzate con indici stabili espliciti; filtraggio e paginazione nascondono le righe senza disabilitarne i campi. Le percentuali passano dal binder it-IT e sono convertite in frazioni decimali prima di raggiungere il dominio. L'ordinamento numerico nel browser confronta stringhe decimali canoniche, senza arrotondamenti floating point. Formato dei backup e schema persistente invariati.
 
 ## Dipendenze
 - Domain: record contabili, calendario e motore deterministico, solo libreria standard.

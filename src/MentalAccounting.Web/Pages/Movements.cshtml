@@ -1,14 +1,14 @@
-@page
+﻿@page
 @model MentalAccounting.Web.Pages.MovementsModel
 @using MentalAccounting.Domain
+@using System.Globalization
 @{ ViewData["Title"] = "Movimenti"; }
 <p class="eyebrow">ENTRATE E USCITE</p><h1>Movimenti</h1>
-<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<div asp-validation-summary="All" class="validation" role="alert"></div>
 @if(Model.Review is {} review){<partial name="_Review" model="review"/>}else{
-<form method="post" class="card card-body mb-4"><h2>@(Model.Id is null ? "Nuovo movimento" : "Modifica movimento")</h2><input asp-for="Version" type="hidden"/><input asp-for="Id" type="hidden"/>
-<div class="row g-3"><div class="col-sm-4"><label asp-for="Date" class="form-label">Data di valuta</label><input asp-for="Date" type="date" class="form-control"/></div><div class="col-sm-4"><label asp-for="Kind" class="form-label">Tipo</label><select asp-for="Kind" class="form-select">@foreach(var k in Enum.GetValues<MovementKind>()){<option value="@k">@Labels.Movement(k)</option>}</select></div><div class="col-sm-4"><label asp-for="Amount" class="form-label">Importo (€)</label><input asp-for="Amount" type="text" inputmode="decimal" class="form-control" placeholder="100,00"/></div><div class="col-12"><label asp-for="Note" class="form-label">Nota facoltativa</label><input asp-for="Note" class="form-control" maxlength="500"/></div></div><button class="btn btn-primary mt-3 align-self-start">Verifica modifica</button></form>
-<div class="card card-body"><h2>Cronologia</h2><div class="table-responsive"><table class="table"><thead><tr><th>Data</th><th>Tipo</th><th>Nota</th><th class="text-end">Importo</th><th>Azioni</th></tr></thead><tbody>
-@foreach(var m in (Model.State.Document.Ledger?.Movements ?? []).OrderByDescending(x=>x.Date)){<tr><td>@m.Date.ToString("dd/MM/yyyy")</td><td>@Labels.Movement(m.Kind)</td><td>@m.Note</td><td class="text-end">@m.Amount.ToString("C")</td><td><div class="d-flex gap-2"><a asp-route-edit="@m.Id" class="btn btn-sm btn-outline-primary">Modifica</a><form method="post" asp-page-handler="Delete"><input name="Version" value="@Model.State.Version" type="hidden"/><input name="id" value="@m.Id" type="hidden"/><button class="btn btn-sm btn-outline-danger">Elimina</button></form></div></td></tr>}
-</tbody></table></div></div>
+<form method="post" class="panel mb-5"><h2>@(Model.Id is null ? "Nuovo movimento" : "Modifica movimento")</h2><input asp-for="Version" type="hidden"/><input asp-for="Id" type="hidden"/>
+<div class="grid gap-4 sm:grid-cols-3"><div><label asp-for="Date" class="field-label">Data di valuta</label><input asp-for="Date" type="date" class="field"/></div><div><label asp-for="Kind" class="field-label">Tipo</label><select asp-for="Kind" class="field">@foreach(var k in Enum.GetValues<MovementKind>()){<option value="@k">@Labels.Movement(k)</option>}</select></div><div><label asp-for="Amount" class="field-label">Importo (€)</label><input asp-for="Amount" type="text" inputmode="decimal" class="field" placeholder="100,00"/></div><div class="sm:col-span-3"><label asp-for="Note" class="field-label">Nota facoltativa</label><input asp-for="Note" class="field" maxlength="500"/></div></div><button class="button button-primary mt-4">Verifica modifica</button></form>
+<section class="panel"><h2>Cronologia</h2><div data-grid data-sort="0:desc" aria-label="Cronologia movimenti"><div class="table-scroll"><table class="data-table"><thead><tr><th data-type="date">Data</th><th data-type="select">Tipo</th><th data-type="text">Nota</th><th data-type="number">Importo (€)</th><th data-type="none">Azioni</th></tr></thead><tbody>
+@foreach(var m in Model.State.Document.Ledger?.Movements ?? []){<tr><td data-value="@m.Date.ToString("yyyy-MM-dd")">@m.Date.ToString("dd/MM/yyyy")</td><td data-value="@m.Kind">@Labels.Movement(m.Kind)</td><td>@m.Note</td><td data-value="@m.Amount.ToString(CultureInfo.InvariantCulture)">@m.Amount.ToString("C")</td><td><div class="flex gap-2"><a asp-route-edit="@m.Id" class="button button-small">Modifica</a><form method="post" asp-page-handler="Delete"><input name="Version" value="@Model.State.Version" type="hidden"/><input name="id" value="@m.Id" type="hidden"/><button class="button button-small button-danger">Elimina</button></form></div></td></tr>}
+</tbody></table></div></div></section>
 }
-

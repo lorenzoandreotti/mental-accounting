@@ -1,27 +1,30 @@
-@page
+﻿@page
 @model MentalAccounting.Web.Pages.SettingsModel
 @using MentalAccounting.Domain
+@using MentalAccounting.Web.Pages
 @{ ViewData["Title"]="Condizioni e calendario"; }
-<p class="eyebrow">LE REGOLE DEL CONTO</p><h1>Condizioni e calendario</h1><p class="text-secondary">Le modifiche ricalcolano tutto lo storico. Tassi e aliquote si applicano dalla decorrenza indicata.</p>
-<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<p class="eyebrow">LE REGOLE DEL CONTO</p><h1>Condizioni e calendario</h1>
+<p class="muted">Le modifiche ricalcolano tutto lo storico. Tassi e aliquote si applicano dalla decorrenza indicata.</p>
+<div asp-validation-summary="All" class="validation" role="alert"></div>
 @if(Model.Review is {} review){<partial name="_Review" model="review"/>}else{
-<form method="post"><input asp-for="Version" type="hidden"/>
-<section class="card card-body mb-4"><h2>Situazione iniziale</h2><div class="row g-3">
-<div class="col-md-3"><label asp-for="Start" class="form-label">Data iniziale</label><input asp-for="Start" type="date" class="form-control"/></div>
-<div class="col-md-3"><label asp-for="Balance" class="form-label">Saldo disponibile (€)</label><input asp-for="Balance" type="text" inputmode="decimal" class="form-control"/></div>
-<div class="col-md-3"><label asp-for="Gross" class="form-label">Lordo già maturato (€)</label><input asp-for="Gross" type="text" inputmode="decimal" class="form-control"/></div>
-<div class="col-md-3"><label asp-for="Tax" class="form-label">Imposta già maturata (€)</label><input asp-for="Tax" type="text" inputmode="decimal" class="form-control"/></div></div>
-<small class="mt-2 text-secondary">Il maturato iniziale non è ancora liquidato e si aggiunge al primo periodo. Se recuperi tutti i versamenti dal foglio, evita di includerli anche nel saldo iniziale.</small></section>
-<section class="card card-body mb-4"><h2>Tassi e tassazione</h2><p>Una riga per decorrenza: <code>AAAA-MM-GG;percentuale</code>. Per esempio, il valore 2 indica il 2%. Inserisci una condizione valida alla data iniziale.</p><div class="row g-3">
-<div class="col-md-6"><label asp-for="Rates" class="form-label">Tassi annui lordi (%)</label><textarea asp-for="Rates" class="form-control font-monospace" rows="6" placeholder="2026-01-01;2&#10;2026-04-01;2,5"></textarea></div>
-<div class="col-md-6"><label asp-for="Taxes" class="form-label">Aliquote sugli interessi (%)</label><textarea asp-for="Taxes" class="form-control font-monospace" rows="6" placeholder="2026-01-01;26"></textarea></div></div></section>
-<section class="card card-body mb-4"><h2>Maturazione e accredito</h2><div class="row g-3">
-<div class="col-md-6"><label asp-for="Basis" class="form-label">Interesse semplice · base annua</label><select asp-for="Basis" class="form-select">@foreach(var b in Enum.GetValues<DayBasis>()){<option value="@b">@Labels.Basis(b)</option>}</select></div>
-<div class="col-md-6"><label asp-for="Months" class="form-label">Periodicità</label><select asp-for="Months" class="form-select"><option value="1">Mensile</option><option value="3">Trimestrale</option><option value="6">Semestrale</option><option value="12">Annuale</option></select></div>
-<div class="col-md-6"><label asp-for="Civil" class="form-label">Allineamento dei periodi</label><select asp-for="Civil" class="form-select"><option value="true">Calendario civile</option><option value="false">Da una data di riferimento</option></select></div>
-<div class="col-md-6"><label asp-for="Anchor" class="form-label">Data di riferimento (solo periodi personalizzati)</label><input asp-for="Anchor" type="date" class="form-control"/></div>
-<div class="col-md-6"><label asp-for="Timing" class="form-label">Quando accreditare</label><select asp-for="Timing" class="form-select">@foreach(var t in Enum.GetValues<CreditTiming>()){<option value="@t">@Labels.Timing(t)</option>}</select></div>
-<div class="col-md-6"><label asp-for="CreditDay" class="form-label">Giorno X del mese successivo (1–31)</label><input asp-for="CreditDay" type="number" min="1" max="31" class="form-control"/></div>
-</div><small class="mt-3 text-secondary">L'accredito a fine periodo avviene dopo la maturazione dell'ultimo giorno. I giorni mancanti vengono sostituiti dall'ultimo giorno del mese.</small></section>
-<button class="btn btn-primary">Verifica condizioni</button></form>
+<form method="post" class="space-y-5"><input asp-for="Version" type="hidden"/>
+<section class="panel"><h2>Situazione iniziale</h2><div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+<div><label asp-for="Start" class="field-label">Data iniziale</label><input asp-for="Start" type="date" class="field"/></div>
+<div><label asp-for="Balance" class="field-label">Saldo disponibile (€)</label><input asp-for="Balance" type="text" inputmode="decimal" class="field"/></div>
+<div><label asp-for="Gross" class="field-label">Lordo già maturato (€)</label><input asp-for="Gross" type="text" inputmode="decimal" class="field"/></div>
+<div><label asp-for="Tax" class="field-label">Imposta già maturata (€)</label><input asp-for="Tax" type="text" inputmode="decimal" class="field"/></div></div>
+<p class="mt-3 mb-0 text-xs muted">Il maturato iniziale si aggiunge al primo periodo. Se recuperi i versamenti dal foglio, evita di includerli anche nel saldo iniziale.</p></section>
+<section class="panel space-y-6"><div><h2>Tassi e tassazione</h2><p class="muted text-sm">Aggiungi una riga per ogni decorrenza. Il valore 2 indica il 2%. Deve esserci una condizione valida alla data iniziale.</p></div>
+<partial name="_EditorGrid" model='new EditorGrid("Rates","Tassi annui lordi",Model.Rates)'/>
+<partial name="_EditorGrid" model='new EditorGrid("Taxes","Aliquote sugli interessi",Model.Taxes)'/>
+</section>
+<section class="panel"><h2>Maturazione e accredito</h2><div class="grid gap-4 md:grid-cols-2">
+<div><label asp-for="Basis" class="field-label">Interesse semplice · base annua</label><select asp-for="Basis" class="field">@foreach(var b in Enum.GetValues<DayBasis>()){<option value="@b">@Labels.Basis(b)</option>}</select></div>
+<div><label asp-for="Months" class="field-label">Periodicità</label><select asp-for="Months" class="field"><option value="1">Mensile</option><option value="3">Trimestrale</option><option value="6">Semestrale</option><option value="12">Annuale</option></select></div>
+<div><label asp-for="Civil" class="field-label">Allineamento dei periodi</label><select asp-for="Civil" class="field"><option value="true">Calendario civile</option><option value="false">Da una data di riferimento</option></select></div>
+<div><label asp-for="Anchor" class="field-label">Data di riferimento (periodi personalizzati)</label><input asp-for="Anchor" type="date" class="field"/></div>
+<div><label asp-for="Timing" class="field-label">Quando accreditare</label><select asp-for="Timing" class="field">@foreach(var t in Enum.GetValues<CreditTiming>()){<option value="@t">@Labels.Timing(t)</option>}</select></div>
+<div><label asp-for="CreditDay" class="field-label">Giorno X del mese successivo (1–31)</label><input asp-for="CreditDay" type="number" min="1" max="31" class="field"/></div>
+</div><p class="mt-3 mb-0 text-xs muted">L'accredito a fine periodo avviene dopo la maturazione dell'ultimo giorno. I giorni mancanti diventano l'ultimo giorno del mese.</p></section>
+<button class="button button-primary">Verifica condizioni</button></form>
 }
