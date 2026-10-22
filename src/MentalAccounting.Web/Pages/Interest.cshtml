@@ -1,7 +1,8 @@
 @page
 @model MentalAccounting.Web.Pages.InterestModel
-@{ViewData["Title"]="Interessi";}
-<p class="eyebrow">DAL CALCOLO ALL'ACCREDITO</p><h1>Interessi</h1>
-<form method="get" class="flex gap-2 items-end mb-4"><div><label asp-for="Through" class="field-label">Situazione alla data</label><input asp-for="Through" type="date" class="field"/></div><button class="button button-primary">Calcola</button></form>
+@{ViewData["Title"]="Dettaglio interessi";}
+<p class="eyebrow">DAL CALCOLO ALL'ACCREDITO</p><h1>Dettaglio interessi</h1>
+@if(Model.PeriodStart is {} start){<p class="notice">Periodo dal @start.ToString("dd/MM/yyyy") al @Model.Through?.ToString("dd/MM/yyyy"). <a asp-page="/Interest">Mostra tutti i periodi</a></p>}
+else{<form method="get" class="flex flex-wrap gap-2 items-end mb-4"><div><label asp-for="Through" class="field-label">Situazione alla data</label><input asp-for="Through" type="date" class="field"/></div><button class="button button-primary">Calcola</button></form>}
 <div asp-validation-summary="All" class="validation" role="alert"></div>
 @if(Model.Result is {} r){<partial name="_Calculation" model="r"/>}else{<p>Configura l'accantonamento o scegli una data valida.</p>}

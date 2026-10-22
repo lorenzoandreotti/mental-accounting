@@ -1,18 +1,44 @@
-﻿@page
+@page
 @model IndexModel
 @using System.Globalization
-@{ ViewData["Title"] = "Panoramica"; }
-<div class="page-heading"><div><p class="eyebrow">IL TUO ACCANTONAMENTO</p><h1>Ogni euro, al suo posto.</h1><p class="muted mb-0">Situazione al @Model.Today.ToString("dd MMMM yyyy")</p></div><a asp-page="/Movements" class="button button-primary">Aggiungi movimento</a></div>
-@if(Model.Result is not {} r){
-<section class="panel"><h2>Inizia dal tuo saldo</h2><p>Imposta data iniziale, tasso, tassazione e calendario. Puoi poi recuperare i movimenti dal foglio Excel.</p><a asp-page="/Settings" class="button button-primary">Configura accantonamento</a></section>
+@using System.Text.Json
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider FileVersions
+@{ ViewData["Title"] = "Movimenti"; }
+<div class="page-heading"><div><p class="eyebrow">IL TUO ACCANTONAMENTO</p><h1>Movimenti</h1><p class="muted mb-0">Situazione al @Model.AsOfDate.ToString("dd MMMM yyyy")</p></div>
+@if(Model.Result is not null){<a asp-route-add="true" asp-fragment="movement-form" class="button button-primary">Nuovo movimento</a>}</div>
+<div asp-validation-summary="All" class="validation" role="alert"></div>
+@if(Model.Review is {} review){<partial name="_Review" model="review"/>}
+else if(Model.Result is not {} r){
+<section class="panel"><h2>Inizia dal tuo saldo</h2><p>Imposta data iniziale, tasso, tassazione e calendario. Puoi poi recuperare i movimenti dal foglio Excel.</p><a asp-page="/Settings/Conditions" class="button button-primary">Configura accantonamento</a></section>
 }else{
-<section class="grid gap-4 sm:grid-cols-2 mb-6" aria-label="Riepilogo">
+<section class="grid gap-4 sm:grid-cols-2 mb-5" aria-label="Riepilogo">
 <div class="panel bg-[var(--accent-soft)]"><span class="text-sm muted">Saldo disponibile</span><strong class="stat">@r.Balance.ToString("C")</strong><small>Comprende gli interessi netti già accreditati</small></div>
-<div class="panel"><span class="text-sm muted">Interessi netti da accreditare</span><strong class="stat">@r.AccruedNet.ToString("C")</strong><small>Lordo @r.AccruedGross.ToString("C") · Imposta @r.AccruedTax.ToString("C")</small></div>
+<div class="panel"><span class="text-sm muted">Interessi netti da accreditare</span><strong class="stat">@r.AccruedNet.ToString("C")</strong><small>Lordo @r.AccruedGross.ToString("C") · Imposta @r.AccruedTax.ToString("C")<br/>Già chiusi, in attesa: @((r.PendingGross-r.PendingTax).ToString("C"))</small></div>
 </section>
-<section class="panel mb-5"><div class="flex flex-wrap justify-between gap-3"><h2>Movimenti</h2><a asp-page="/Movements" class="text-sm">Gestisci movimenti</a></div><p class="text-xs muted">Filtri e ordinamento riguardano tutto lo storico. I riepiloghi del saldo restano complessivi.</p>
-<div data-grid data-sort="0:desc" aria-label="Movimenti della panoramica"><div class="table-scroll"><table class="data-table"><thead><tr><th data-type="date">Data</th><th data-type="select">Tipo</th><th data-type="text">Nota</th><th data-type="number">Importo (€)</th></tr></thead><tbody>
-@foreach(var m in Model.State.Document.Ledger!.Movements){var signed=m.Kind==MentalAccounting.Domain.MovementKind.Deposit?m.Amount:-m.Amount;<tr><td data-value="@m.Date.ToString("yyyy-MM-dd")">@m.Date.ToString("dd/MM/yyyy")</td><td data-value="@m.Kind">@Labels.Movement(m.Kind)</td><td>@m.Note</td><td data-value="@signed.ToString(CultureInfo.InvariantCulture)">@signed.ToString("C")</td></tr>}
+<section class="panel mb-5" data-balance-chart data-chart-module="@FileVersions.AddFileVersionToPath(ViewContext.HttpContext.Request.PathBase,Url.Content("~/js/balance-chart.bundle.js"))" aria-label="Storico del saldo">
+<h2>Storico del saldo</h2><p class="text-xs muted" id="history-description">Valori a fine giornata. La seconda linea comprende il netto maturato ancora da accreditare. Il periodo del grafico è indipendente dai filtri della cronologia.</p>
+<script type="application/json" data-history>@Html.Raw(JsonSerializer.Serialize(r.History,new JsonSerializerOptions(JsonSerializerDefaults.Web)))</script>
+<div class="flex flex-wrap gap-2 mb-4" role="group" aria-label="Periodo del grafico">
+<button type="button" class="button button-small" data-chart-period="1">1 mese</button><button type="button" class="button button-small" data-chart-period="3">3 mesi</button><button type="button" class="button button-small" data-chart-period="6">6 mesi</button><button type="button" class="button button-small" data-chart-period="12">1 anno</button><button type="button" class="button button-small" data-chart-period="all" aria-pressed="true">Tutto</button></div>
+<form data-chart-range class="flex flex-wrap items-end gap-3 mb-4">
+<div><label for="history-from" class="field-label">Dal</label><input type="date" id="history-from" class="field" data-chart-from required/></div>
+<div><label for="history-to" class="field-label">Al</label><input type="date" id="history-to" class="field" data-chart-to required/></div>
+<button class="button button-small">Applica periodo</button></form>
+<p data-chart-error class="validation" role="alert" hidden></p>
+<div class="relative h-64 sm:h-80" data-chart-container><canvas data-chart-canvas role="img" aria-label="Andamento del saldo disponibile e del saldo con interessi maturati" aria-describedby="history-description">I valori sono consultabili nella lettura per data sotto il grafico.</canvas></div>
+<div class="mt-4 border-t border-[var(--line)] pt-4"><label for="history-day" class="field-label">Leggi i valori di una data</label><input type="date" id="history-day" class="field max-w-56" data-chart-day/><output class="block mt-3 text-sm" data-chart-values aria-live="polite"></output></div>
+<noscript><p class="notice">Attiva JavaScript per consultare il grafico. I riepiloghi e la cronologia restano disponibili.</p></noscript>
+</section>
+<details id="movement-form" class="panel mb-5" open="@(Model.FormOpen ? "open" : null)">
+<summary class="font-medium">@(Model.Id is null ? "Nuovo movimento" : "Modifica movimento")</summary>
+<form method="post" class="mt-4"><input asp-for="Version" type="hidden"/><input asp-for="Id" type="hidden"/>
+<div class="grid gap-4 sm:grid-cols-3"><div><label asp-for="Date" class="field-label">Data di valuta</label><input asp-for="Date" type="date" class="field"/></div><div><label asp-for="Kind" class="field-label">Tipo</label><select asp-for="Kind" class="field">@foreach(var k in Enum.GetValues<MentalAccounting.Domain.MovementKind>()){<option value="@k">@Labels.Movement(k)</option>}</select></div><div><label asp-for="Amount" class="field-label">Importo (€)</label><input asp-for="Amount" type="text" inputmode="decimal" class="field" placeholder="100,00"/></div><div class="sm:col-span-3"><label asp-for="Note" class="field-label">Nota facoltativa</label><input asp-for="Note" class="field" maxlength="500"/></div></div><button class="button button-primary mt-4">Verifica modifica</button>
+@if(Model.Id is not null){<a asp-page="/Index" class="button">Annulla modifica</a>}</form></details>
+<section class="panel"><h2>Cronologia</h2><p class="text-xs muted">Gli interessi accreditati sono calcolati automaticamente. Filtri e ordinamento non modificano saldo e grafico.</p>
+<div data-grid data-sort="0:desc" aria-label="Cronologia movimenti e interessi"><div class="table-scroll"><table class="data-table"><thead><tr><th data-type="date">Data</th><th data-type="select">Tipo</th><th data-type="text">Descrizione</th><th data-type="number">Importo (€)</th><th data-type="none">Azioni e dettaglio</th></tr></thead><tbody>
+@foreach(var entry in Model.Activities){<tr data-activity-type="@entry.Type"><td data-value="@entry.Date.ToString("yyyy-MM-dd")">@entry.Date.ToString("dd/MM/yyyy")</td><td data-value="@entry.Type">@(entry.Type=="Interest" ? "Interessi" : Labels.Movement(Enum.Parse<MentalAccounting.Domain.MovementKind>(entry.Type)))</td><td>@entry.Note</td><td data-value="@entry.Amount.ToString(CultureInfo.InvariantCulture)">@entry.Amount.ToString("+0.00 €;-0.00 €;0.00 €")</td><td>
+@if(entry.Interest is {} interest){<details><summary class="text-sm">Dettaglio accredito</summary><dl class="text-xs mt-2 space-y-1"><dt>Periodo</dt><dd>@interest.From.ToString("dd/MM/yyyy") – @interest.Through.ToString("dd/MM/yyyy")</dd><dt>Lordo</dt><dd>@interest.Gross.ToString("C")</dd><dt>Imposta</dt><dd>@interest.Tax.ToString("C")</dd><dt>Netto</dt><dd>@interest.Net.ToString("C")</dd></dl><a asp-page="/Interest" asp-route-PeriodStart="@interest.From.ToString("yyyy-MM-dd")" asp-route-Through="@interest.Through.ToString("yyyy-MM-dd")" class="text-xs">Vedi il calcolo del periodo</a></details>}
+else if(entry.MovementId is {} id){<div class="flex gap-2"><a asp-page="/Index" asp-route-edit="@id" asp-fragment="movement-form" class="button button-small">Modifica</a><form method="post" asp-page-handler="Delete"><input name="Version" value="@Model.State.Version" type="hidden"/><input name="id" value="@id" type="hidden"/><button class="button button-small button-danger">Elimina</button></form></div>}
+</td></tr>}
 </tbody></table></div></div></section>
-<section class="panel"><div class="flex flex-wrap items-center justify-between gap-3"><div><h2>Interessi e obiettivi</h2><p class="muted text-sm mb-0">Già chiusi, in attesa di pagamento: @((r.PendingGross-r.PendingTax).ToString("C"))</p></div><div class="flex flex-wrap gap-2"><a asp-page="/Interest" class="button">Dettaglio interessi</a><a asp-page="/Simulations" class="button">Crea una simulazione</a></div></div></section>
 }

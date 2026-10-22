@@ -1,13 +1,22 @@
 ﻿@model MentalAccounting.Domain.CalculationResult
 @using System.Globalization
+@{var selected=ViewData["SelectedPeriod"] as MentalAccounting.Domain.Settlement;}
 <div class="grid gap-4 sm:grid-cols-3 mb-5">
+@if(selected is not null){
+<div class="panel"><span class="text-sm muted">Lordo del periodo</span><strong class="stat">@selected.Gross.ToString("C")</strong></div>
+<div class="panel"><span class="text-sm muted">Imposta del periodo</span><strong class="stat">@selected.Tax.ToString("C")</strong></div>
+<div class="panel"><span class="text-sm muted">Netto del periodo</span><strong class="stat">@selected.Net.ToString("C")</strong></div>
+}else{
 <div class="panel"><span class="text-sm muted">Saldo disponibile</span><strong class="stat">@Model.Balance.ToString("C")</strong></div>
 <div class="panel"><span class="text-sm muted">Lordo da accreditare</span><strong class="stat">@Model.AccruedGross.ToString("C")</strong></div>
-<div class="panel"><span class="text-sm muted">Netto da accreditare</span><strong class="stat">@Model.AccruedNet.ToString("C")</strong></div></div>
+<div class="panel"><span class="text-sm muted">Netto da accreditare</span><strong class="stat">@Model.AccruedNet.ToString("C")</strong></div>
+}</div>
 <section class="panel mb-5"><h2>Liquidazioni per periodo</h2>
 <div data-grid data-sort="0:desc" aria-label="Liquidazioni"><div class="table-scroll"><table class="data-table"><thead><tr><th data-type="date">Dal</th><th data-type="date">Al</th><th data-type="date">Accredito</th><th data-type="number">Lordo (€)</th><th data-type="number">Imposta (€)</th><th data-type="number">Netto (€)</th><th data-type="select">Stato</th></tr></thead><tbody>
 @foreach(var s in Model.Settlements){<tr><td data-value="@s.From.ToString("yyyy-MM-dd")">@s.From.ToString("dd/MM/yyyy")</td><td data-value="@s.Through.ToString("yyyy-MM-dd")">@s.Through.ToString("dd/MM/yyyy")</td><td data-value="@s.CreditDate.ToString("yyyy-MM-dd")">@s.CreditDate.ToString("dd/MM/yyyy")</td><td data-value="@s.Gross.ToString(CultureInfo.InvariantCulture)">@s.Gross.ToString("C")</td><td data-value="@s.Tax.ToString(CultureInfo.InvariantCulture)">@s.Tax.ToString("C")</td><td data-value="@s.Net.ToString(CultureInfo.InvariantCulture)">@s.Net.ToString("C")</td><td>@(s.Credited?"Accreditato":"In attesa")</td></tr>}
-</tbody></table></div></div><p class="mb-0 text-xs muted">Periodo aperto: lordo @Model.OpenGross.ToString("C"), imposta @Model.OpenTax.ToString("C"). Chiusi in attesa: lordo @Model.PendingGross.ToString("C"), imposta @Model.PendingTax.ToString("C").</p></section>
+</tbody></table></div></div>
+@if(selected is null){<p class="mb-0 text-xs muted">Periodo aperto: lordo @Model.OpenGross.ToString("C"), imposta @Model.OpenTax.ToString("C"). Chiusi in attesa: lordo @Model.PendingGross.ToString("C"), imposta @Model.PendingTax.ToString("C").</p>}
+</section>
 <section class="panel"><h2>Come sono calcolati</h2><p class="text-xs muted">Dettaglio a sei decimali; arrotondamento ai centesimi solo alla chiusura. Il maturato iniziale, se presente, si aggiunge alla prima liquidazione.</p>
 <div data-grid data-sort="0:asc" aria-label="Tratti di maturazione"><div class="table-scroll"><table class="data-table"><thead><tr><th data-type="date">Dal</th><th data-type="date">Al</th><th data-type="number">Giorni</th><th data-type="number">Capitale (€)</th><th data-type="number">Tasso (%)</th><th data-type="number">Aliquota (%)</th><th data-type="number">Base</th><th data-type="number">Lordo (€)</th><th data-type="number">Imposta (€)</th></tr></thead><tbody>
 @foreach(var s in Model.Segments){<tr><td data-value="@s.From.ToString("yyyy-MM-dd")">@s.From.ToString("dd/MM/yyyy")</td><td data-value="@s.Through.ToString("yyyy-MM-dd")">@s.Through.ToString("dd/MM/yyyy")</td><td data-value="@s.Days">@s.Days</td><td data-value="@s.Capital.ToString(CultureInfo.InvariantCulture)">@s.Capital.ToString("C")</td><td data-value="@((s.Rate*100).ToString(CultureInfo.InvariantCulture))">@s.Rate.ToString("P4")</td><td data-value="@((s.TaxRate*100).ToString(CultureInfo.InvariantCulture))">@s.TaxRate.ToString("P2")</td><td>@s.Denominator</td><td data-value="@s.Gross.ToString(CultureInfo.InvariantCulture)">@s.Gross.ToString("N6")</td><td data-value="@s.Tax.ToString(CultureInfo.InvariantCulture)">@s.Tax.ToString("N6")</td></tr>}

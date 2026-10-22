@@ -19,7 +19,7 @@ public sealed class WebTests
     [Fact] public async Task AnonymousPagesRequireLoginAndLoginContainsAntiforgery()
     {
         await using var factory=new AppFactory();using var client=factory.CreateClient(new(){AllowAutoRedirect=false,BaseAddress=new("https://localhost")});
-        foreach(var path in new[]{"/","/Settings","/Movements","/Interest","/Simulations","/Transfer"})
+        foreach(var path in new[]{"/","/Settings/Conditions","/Settings/Appearance","/Interest","/Simulations","/Settings/Data"})
         {var response=await client.GetAsync(path);Assert.Equal(HttpStatusCode.Redirect,response.StatusCode);Assert.Contains("/Account/Login",response.Headers.Location!.ToString());}
         var login=await client.GetStringAsync("/Account/Login");Assert.Contains("__RequestVerificationToken",login);Assert.Contains("Accedi",login);
         var invalid=await client.PostAsync("/Account/Login",new FormUrlEncodedContent(new Dictionary<string,string>{{"Username","admin"},{"Password","wrong"}}));
@@ -29,23 +29,23 @@ public sealed class WebTests
     {
         await using var factory=new AppFactory();using var client=factory.CreateClient(new(){AllowAutoRedirect=false,BaseAddress=new("https://localhost")});
         client.DefaultRequestHeaders.Add("X-Test-User","admin");
-        var settings=await client.GetStringAsync("/Settings");
+        var settings=await client.GetStringAsync("/Settings/Conditions");
         var data=new Dictionary<string,string>{{"__RequestVerificationToken",Field(settings,"__RequestVerificationToken")},{"Version","0"},{"Start","2026-01-01"},
             {"Balance","1000,00"},{"Gross","0"},{"Tax","0"},{"Basis","Actual365"},{"Months","1"},{"Civil","true"},{"Timing","NextMonthFirst"},{"CreditDay","1"},
             {"Rates.Index","r1"},{"Rates[r1].Key","r1"},{"Rates[r1].From","2026-01-01"},{"Rates[r1].Percentage","2,5"},{"Taxes.Index","t1"},{"Taxes[t1].Key","t1"},{"Taxes[t1].From","2026-01-01"},{"Taxes[t1].Percentage","26"}};
-        var response=await client.PostAsync("/Settings",new FormUrlEncodedContent(data));Assert.Equal(HttpStatusCode.OK,response.StatusCode);
+        var response=await client.PostAsync("/Settings/Conditions",new FormUrlEncodedContent(data));Assert.Equal(HttpStatusCode.OK,response.StatusCode);
         var review=await response.Content.ReadAsStringAsync();Assert.Contains("Conferma la modifica",review);
-        response=await Confirm(client,"/Settings",review);Assert.Equal(HttpStatusCode.Redirect,response.StatusCode);
+        response=await Confirm(client,"/Settings/Conditions",review);Assert.Equal(HttpStatusCode.Redirect,response.StatusCode);
         var home=await client.GetStringAsync("/");Assert.Contains("Saldo disponibile",home);
-        var moves=await client.GetStringAsync("/Movements");
-        var movement=await client.PostAsync("/Movements",new FormUrlEncodedContent(new Dictionary<string,string>{
+        var moves=await client.GetStringAsync("/");
+        var movement=await client.PostAsync("/",new FormUrlEncodedContent(new Dictionary<string,string>{
             {"__RequestVerificationToken",Field(moves,"__RequestVerificationToken")},{"Version","1"},{"Date","2026-02-10"},{"Kind","Deposit"},{"Amount","50,25"},{"Note","Vacanze"}}));
         review=await movement.Content.ReadAsStringAsync();Assert.Contains("Conferma la modifica",review);
-        Assert.Equal(HttpStatusCode.Redirect,(await Confirm(client,"/Movements",review)).StatusCode);
-        Assert.Contains("Vacanze",await client.GetStringAsync("/Movements"));
-        foreach(var path in new[]{"/Interest","/Simulations","/Transfer","/Settings"})Assert.Equal(HttpStatusCode.OK,(await client.GetAsync(path)).StatusCode);
-        var json=await client.GetStringAsync("/Transfer?handler=Export&format=json");Assert.Contains("50.25",json);
-        Assert.Equal(HttpStatusCode.BadRequest,(await client.PostAsync("/Movements",new FormUrlEncodedContent(data.Where(x=>x.Key!="__RequestVerificationToken")))).StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect,(await Confirm(client,"/",review)).StatusCode);
+        Assert.Contains("Vacanze",await client.GetStringAsync("/"));
+        foreach(var path in new[]{"/Interest","/Simulations","/Settings/Data","/Settings/Conditions"})Assert.Equal(HttpStatusCode.OK,(await client.GetAsync(path)).StatusCode);
+        var json=await client.GetStringAsync("/Settings/Data?handler=Export&format=json");Assert.Contains("50.25",json);
+        Assert.Equal(HttpStatusCode.BadRequest,(await client.PostAsync("/",new FormUrlEncodedContent(data.Where(x=>x.Key!="__RequestVerificationToken")))).StatusCode);
     }
     public static string Field(string html,string name)
     {
@@ -79,11 +79,11 @@ public sealed class WebTests
             var state=await scope.ServiceProvider.GetRequiredService<IAccountStore>().Load();Assert.Empty(state.Document.Ledger!.Movements);Assert.Single(state.Document.Scenarios);
             backup=BackupFormat.Write(state.Document);
         }
-        page=await client.GetStringAsync("/Transfer");using var upload=new MultipartFormDataContent();
+        page=await client.GetStringAsync("/Settings/Data");using var upload=new MultipartFormDataContent();
         upload.Add(new StringContent(Field(page,"__RequestVerificationToken")),"__RequestVerificationToken");upload.Add(new StringContent("2"),"Version");
         upload.Add(new StringContent(backup),"Upload","backup.json");
-        response=await client.PostAsync("/Transfer?handler=Restore",upload);review=await response.Content.ReadAsStringAsync();Assert.Contains("Conferma la modifica",review);
-        Assert.Equal(HttpStatusCode.Redirect,(await Confirm(client,"/Transfer",review)).StatusCode);
+        response=await client.PostAsync("/Settings/Data?handler=Restore",upload);review=await response.Content.ReadAsStringAsync();Assert.Contains("Conferma la modifica",review);
+        Assert.Equal(HttpStatusCode.Redirect,(await Confirm(client,"/Settings/Data",review)).StatusCode);
     }
     private static Task<HttpResponseMessage> Confirm(HttpClient client,string page,string html)=>client.PostAsync(page+"?handler=Confirm",new FormUrlEncodedContent(new Dictionary<string,string>
     {{"__RequestVerificationToken",Field(html,"__RequestVerificationToken")},{"Ticket",Field(html,"Ticket")}}));

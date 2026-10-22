@@ -2,7 +2,7 @@ namespace MentalAccounting.Domain;
 
 public sealed class InterestCalculator
 {
-    public CalculationResult Calculate(Ledger ledger, DateOnly asOf, InterestMethod method = InterestMethod.Simple)
+    public CalculationResult Calculate(Ledger ledger, DateOnly asOf, InterestMethod method = InterestMethod.Simple, bool includeHistory = false)
     {
         if (!Enum.IsDefined(method)) throw new BusinessException("Metodo di calcolo non valido.");
         Validate(ledger, asOf);
@@ -13,6 +13,8 @@ public sealed class InterestCalculator
         var end = AccrualCalendar.PeriodEnd(periodStart, ledger.Calendar);
         var segments = new List<CalculationSegment>();
         var settlements = new List<Settlement>();
+        var history = includeHistory ? new List<BalanceHistoryPoint>() : null;
+        decimal pendingGross = 0, pendingTax = 0;
         var movements = ledger.Movements.GroupBy(x => x.Date).ToDictionary(x => x.Key, x => x.Sum(m => m.Kind == MovementKind.Deposit ? m.Amount : -m.Amount));
         var rates = ledger.Rates.OrderBy(x => x.From).ToArray();
         var taxes = ledger.Taxes.OrderBy(x => x.From).ToArray();
@@ -23,7 +25,12 @@ public sealed class InterestCalculator
         {
             for (var i = 0; i < settlements.Count; i++)
                 if (!settlements[i].Credited && settlements[i].CreditDate <= day)
-                { balance += settlements[i].Net; settlements[i] = settlements[i] with { Credited = true }; }
+                {
+                    balance += settlements[i].Net;
+                    pendingGross -= settlements[i].Gross;
+                    pendingTax -= settlements[i].Tax;
+                    settlements[i] = settlements[i] with { Credited = true };
+                }
             if (movements.TryGetValue(day, out var delta)) balance += delta;
             if (balance < 0) throw new BusinessException($"Saldo negativo il {day:dd/MM/yyyy}.");
             if (balance > 1_000_000_000_000_000_000_000_000m || gross > 1_000_000_000_000_000_000_000_000m)
@@ -55,13 +62,15 @@ public sealed class InterestCalculator
                 var credit = AccrualCalendar.CreditDate(end, ledger.Calendar);
                 settlements.Add(new(periodStart, end, credit, roundedGross, roundedTax, roundedGross - roundedTax, credit <= day));
                 if (credit <= day) balance += roundedGross - roundedTax;
+                else { pendingGross += roundedGross; pendingTax += roundedTax; }
                 gross = tax = 0;
                 periodStart = day.AddDays(1);
                 end = AccrualCalendar.PeriodEnd(periodStart, ledger.Calendar);
             }
+            history?.Add(new(day, balance, gross - tax + pendingGross - pendingTax));
         }
-        return new(asOf, balance, gross, tax, settlements.Where(x => !x.Credited).Sum(x => x.Gross),
-            settlements.Where(x => !x.Credited).Sum(x => x.Tax), segments, settlements);
+        return new(asOf, balance, gross, tax, pendingGross, pendingTax, segments, settlements)
+        { History = history ?? [] };
     }
 
     public static decimal Money(decimal value) => decimal.Round(value, 2, MidpointRounding.AwayFromZero);

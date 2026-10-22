@@ -11,12 +11,15 @@
     <div class="shell flex flex-wrap items-center justify-between gap-3 py-4">
         <a class="flex items-center gap-2 text-xl font-semibold tracking-tight" asp-page="/Index"><span class="rounded-lg bg-[var(--accent)] px-3 py-1 text-[var(--canvas)]" aria-hidden="true">a</span> accantona</a>
         <div class="flex items-center gap-3">
-            <label class="flex items-center gap-2 text-xs muted"><span>Tema</span><select class="field w-auto" data-theme-select aria-label="Tema dell'interfaccia"><option value="system">Sistema</option><option value="light">Chiaro</option><option value="dark">Scuro</option></select></label>
+            <button type="button" class="button button-small" data-theme-toggle aria-label="Passa al tema scuro" aria-pressed="false">Scuro</button>
             @if(User.Identity?.IsAuthenticated==true){<button class="button lg:hidden" type="button" data-nav-toggle aria-controls="navigation" aria-expanded="false">Menu</button>}
         </div>
         @if(User.Identity?.IsAuthenticated==true){
             <nav class="hidden w-full flex-col gap-1 lg:flex lg:flex-row lg:items-center" id="navigation" data-navigation aria-label="Navigazione principale">
-                <a class="nav-link" asp-page="/Index">Panoramica</a><a class="nav-link" asp-page="/Movements">Movimenti</a><a class="nav-link" asp-page="/Interest">Interessi</a><a class="nav-link" asp-page="/Simulations">Simulazioni</a><a class="nav-link" asp-page="/Settings">Condizioni</a><a class="nav-link" asp-page="/Transfer">Dati</a>
+                <a class="nav-link" asp-page="/Index">Movimenti</a>
+                <a class="nav-link" asp-page="/Interest">Dettaglio interessi</a>
+                <a class="nav-link" asp-page="/Simulations">Simulazioni</a>
+                <a class="nav-link" asp-page="/Settings/Conditions" data-settings-link>Impostazioni</a>
                 <form method="post" asp-page="/Account/Logout" class="lg:ml-auto"><button class="nav-link">Esci</button></form>
             </nav>
         }

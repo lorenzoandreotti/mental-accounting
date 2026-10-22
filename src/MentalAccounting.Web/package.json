@@ -3,14 +3,18 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "ui:build": "npm run css:build && npm run chart:build",
+    "chart:build": "node Scripts/build-chart.mjs",
     "css:build": "tailwindcss -i Styles/app.css -o wwwroot/css/site.css --minify",
     "css:watch": "tailwindcss -i Styles/app.css -o wwwroot/css/site.css --watch",
     "test": "vitest run"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.0",
+    "chart.js": "^4.6.1",
+    "esbuild": "^0.28.2",
+    "jsdom": "^27.0.0",
     "tailwindcss": "^4.1.0",
-    "vitest": "^4.0.0",
-    "jsdom": "^27.0.0"
+    "vitest": "^4.0.0"
   }
 }

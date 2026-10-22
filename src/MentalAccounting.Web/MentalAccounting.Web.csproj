@@ -18,11 +18,13 @@
     <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(MSBuildProjectDirectory)" EnvironmentVariables="npm_config_cache=$(MSBuildProjectDirectory)/obj/npm-cache" />
   </Target>
   <Target Name="BuildUiAssets" BeforeTargets="PrepareForBuild" Condition="'$(DesignTimeBuild)' != 'true' and '$(SkipUiBuild)' != 'true'">
-    <Exec Command="npm run css:build" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <Exec Command="npm run ui:build" WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>
   <!-- Explicit inclusion is needed on a clean checkout: the generated file does not exist at project evaluation. -->
   <ItemGroup>
     <Content Remove="wwwroot/css/site.css" />
     <Content Include="wwwroot/css/site.css" CopyToPublishDirectory="PreserveNewest" />
+    <Content Remove="wwwroot/js/balance-chart.bundle.js" />
+    <Content Include="wwwroot/js/balance-chart.bundle.js" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

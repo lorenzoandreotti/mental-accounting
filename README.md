@@ -25,9 +25,15 @@ dotnet test
 
 ## Interfaccia e sviluppo degli stili
 
-L'interfaccia usa Tailwind CSS, senza Bootstrap, jQuery o dipendenze CDN. Il selettore Sistema/Chiaro/Scuro è disponibile anche nel login; la preferenza viene ricordata solo nel browser del dispositivo.
+L'interfaccia usa Tailwind CSS, senza Bootstrap, jQuery o dipendenze CDN. La pagina iniziale **Movimenti** comprende riepiloghi, grafico del saldo, modulo espandibile e cronologia unificata: versamenti, prelievi, addebiti e interessi netti già accreditati. Gli accrediti automatici sono consultabili e filtrabili ma non modificabili. Il loro dettaglio collega al calcolo del periodo.
 
-`dotnet build`, `dotnet run` e `dotnet publish` installano automaticamente le dipendenze npm con `npm ci` quando necessario e compilano `Styles/app.css` in `wwwroot/css/site.css`. Il CSS compilato è versionato per renderne verificabile l'output; modificare il sorgente in `Styles`, non il file generato. Gli script dei componenti sono in `wwwroot/js`. Il lockfile npm rende riproducibile l'installazione.
+La navigazione comprende Movimenti, Dettaglio interessi, Simulazioni e Impostazioni. Quest'ultima contiene tre sottopagine: **Condizioni di calcolo**, **Aspetto** e **Importa/Esporta**. I vecchi indirizzi `/Movements`, `/Settings` e `/Transfer` reindirizzano alle nuove pagine, mantenendo i parametri di modifica e download.
+
+In Impostazioni → Aspetto si sceglie tra modalità **Automatica** (default, segue il sistema e nasconde il toggle in alto) e **Manuale** (mostra il toggle Chiaro/Scuro, anche nel login). La scelta è immediata e viene ricordata solo nel browser del dispositivo. Le preferenze esistenti restano valide; passando a Manuale viene mantenuto il colore attualmente visualizzato.
+
+Il grafico mostra i saldi giornalieri a fine giornata: disponibile e comprensivo del netto maturato, inclusi gli interessi chiusi in attesa di pagamento. I pulsanti 1/3/6 mesi, 1 anno e Tutto e le date personalizzate agiscono soltanto sul grafico; i filtri della cronologia non cambiano grafico, riepiloghi o esportazioni. La lettura per data sotto il grafico fornisce un'alternativa accessibile ai tooltip.
+
+`dotnet build`, `dotnet run` e `dotnet publish` installano automaticamente le dipendenze npm con `npm ci` quando necessario ed eseguono `npm run ui:build`: Tailwind compila `Styles/app.css` in `wwwroot/css/site.css` ed esbuild compila `Client/balance-chart.js` con i soli componenti Chart.js necessari in `wwwroot/js/balance-chart.bundle.js`. CSS e bundle compilati sono versionati; modificare i sorgenti in `Styles` e `Client`, non i file generati. Gli altri componenti JavaScript sono in `wwwroot/js`. Il lockfile npm rende riproducibile l'installazione.
 
 Durante le modifiche agli stili, in un secondo terminale:
 
@@ -42,10 +48,10 @@ Per i test JavaScript e la compilazione manuale:
 cd src/MentalAccounting.Web
 npm.cmd ci
 npm.cmd test
-npm.cmd run css:build
+npm.cmd run ui:build
 ```
 
-Su Linux/macOS usare `npm` al posto di `npm.cmd`. Nel Dockerfile uno stage Node compila il CSS prima della pubblicazione .NET; il container finale non contiene Node. `SkipUiBuild=true` è riservato a pipeline che hanno già prodotto il CSS.
+Su Linux/macOS usare `npm` al posto di `npm.cmd`. Dopo una modifica a `Client/balance-chart.js`, ricompilare con `npm.cmd run chart:build` oppure `ui:build`. Nel Dockerfile uno stage Node compila CSS e grafico prima della pubblicazione .NET; il container finale non contiene Node. `SkipUiBuild=true` è riservato a pipeline che hanno già prodotto entrambi gli asset.
 
 Le griglie offrono filtri per colonna, ordinamento e pagine da 10/25/50 righe. Il pulsante Filtri per colonna espone i controlli; Azzera filtri ripristina l'intero insieme. I riepiloghi e le esportazioni restano complessivi. Nelle griglie modificabili tutte le righe non eliminate vengono salvate, anche quando nascoste dai filtri o dalla paginazione. Le modifiche restano soggette ad anteprima e conferma. Le percentuali accettano la virgola italiana; non sono più necessarie righe di testo separate da punto e virgola.
 

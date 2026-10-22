@@ -40,8 +40,8 @@ public static class BackupFormat
 public sealed class AccountingService(IAccountStore store, InterestCalculator calculator)
 {
     public Task<AccountSnapshot> Load(CancellationToken ct = default) => store.Load(ct);
-    public CalculationResult Calculate(Ledger ledger, DateOnly through, InterestMethod method = InterestMethod.Simple)
-        => calculator.Calculate(ledger, through, method);
+    public CalculationResult Calculate(Ledger ledger, DateOnly through, InterestMethod method = InterestMethod.Simple, bool includeHistory = false)
+        => calculator.Calculate(ledger, through, method, includeHistory);
 
     public async Task<ChangePreview> Preview(AccountDocument proposed, long version, DateOnly today, CancellationToken ct = default)
     {

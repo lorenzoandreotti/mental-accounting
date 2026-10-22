@@ -33,3 +33,14 @@ Il foglio originale non è stato modificato né incluso nel repository. Nell'imp
 - Pubblicazione Release riuscita con CSS e moduli JavaScript inclusi. Nessuna migrazione o modifica al formato dei backup.
 - Le verifiche sono state eseguite in Release perché la copia Debug dell'utente era in esecuzione; nessun processo dell'utente è stato fermato.
 - Il controllo visivo desktop/mobile e da tastiera nel browser resta da eseguire: nessun browser è collegato agli strumenti disponibili. I test DOM non sostituiscono il controllo visivo. Anche la build Docker resta da verificare su una macchina con Docker disponibile.
+
+## Storico del saldo e riorganizzazione
+
+- Pagina iniziale Movimenti con modulo espandibile, riepiloghi, grafico giornaliero e cronologia con accrediti automatici di sola lettura. Impostazioni suddivise in Condizioni, Aspetto e Importa/Esporta.
+- Storico prodotto nello stesso ciclo del calcolo, opzionale per gli altri chiamanti; ultimo punto riconciliato con il riepilogo, compresi pagamenti differiti e chiusure a fine giornata. Nessuna migrazione database o modifica ai backup.
+- Grafico Chart.js compilato localmente con esbuild, caricato solo quando presente, con periodo indipendente, tooltip e lettura accessibile per data. Palette aggiornata al cambio tema.
+- Tema Automatico/Manuale compatibile con le preferenze preesistenti, toggle nascosto in Automatico prima del rendering e visibile in Manuale anche nel login.
+- **50 test .NET superati**: 24 dominio, 7 applicativi, 19 integrazione. Inclusi PostgreSQL sul database separato `accounting_test`, Identity e lettura del foglio originale. Verificati redirect legacy con parametri di download, modulo aperto su modifica/errori, accrediti non modificabili e selezione del periodo di calcolo.
+- **16 test JavaScript superati**: 8 griglie, 4 tema, 4 grafico. Verificati intervalli inclusivi, febbraio bisestile, indipendenza dai filtri e aggiornamento dei colori.
+- Pubblicazione Release riuscita con CSS e bundle del grafico inclusi; pipeline Docker aggiornata per copiare entrambi gli asset.
+- Nessun processo dell'utente o PostgreSQL fermato durante questo intervento. Controllo browser riprovato: nessuna superficie browser disponibile; verifica visiva e build Docker restano da eseguire sulla destinazione.

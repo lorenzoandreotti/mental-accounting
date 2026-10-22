@@ -1,0 +1,14 @@
+@page
+@model MentalAccounting.Web.Pages.Settings.AppearanceModel
+@{ ViewData["Title"] = "Aspetto"; }
+<partial name="_SettingsNavigation"/>
+<p class="eyebrow">IL TUO DISPOSITIVO</p><h1>Aspetto</h1>
+<section class="panel max-w-2xl space-y-4">
+    <div><label for="theme-mode" class="field-label">Modalità del tema</label>
+        <select id="theme-mode" class="field" data-theme-mode-select><option value="automatic">Automatica</option><option value="manual">Manuale</option></select>
+    </div>
+    <p class="muted text-sm">Automatica segue il tema del sistema e nasconde il toggle nell'intestazione. In modalità Manuale puoi passare tra Chiaro e Scuro con il toggle in alto a destra.</p>
+    <p class="text-xs muted" role="status" data-theme-description></p>
+    <p class="text-xs muted">La scelta si applica subito e viene ricordata in questo browser. Non modifica i dati del conto né le preferenze degli altri dispositivi.</p>
+    <noscript><p class="notice">Attiva JavaScript per modificare il tema.</p></noscript>
+</section>

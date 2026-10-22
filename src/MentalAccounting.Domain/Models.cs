@@ -17,10 +17,15 @@ public sealed record CalculationSegment(DateOnly From, DateOnly Through, decimal
 { public int Days => Through.DayNumber - From.DayNumber + 1; }
 public sealed record Settlement(DateOnly From, DateOnly Through, DateOnly CreditDate,
     decimal Gross, decimal Tax, decimal Net, bool Credited);
+public sealed record BalanceHistoryPoint(DateOnly Date, decimal Available, decimal AccruedNet)
+{
+    public decimal Total => Available + AccruedNet;
+}
 public sealed record CalculationResult(DateOnly AsOf, decimal Balance, decimal OpenGross, decimal OpenTax,
     decimal PendingGross, decimal PendingTax, IReadOnlyList<CalculationSegment> Segments,
     IReadOnlyList<Settlement> Settlements)
 {
+    public IReadOnlyList<BalanceHistoryPoint> History { get; init; } = [];
     public decimal AccruedGross => OpenGross + PendingGross;
     public decimal AccruedTax => OpenTax + PendingTax;
     public decimal AccruedNet => AccruedGross - AccruedTax;

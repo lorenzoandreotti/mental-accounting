@@ -29,13 +29,13 @@ public sealed class GridFormTests
     public async Task AllThirteenRowsAreSavedWithStableKeysAndItalianPercentages()
     {
         await using var factory = new AppFactory(); using var client = Client(factory);
-        var html = await client.GetStringAsync("/Settings"); var form = Settings(WebTests.Field(html, "__RequestVerificationToken"));
+        var html = await client.GetStringAsync("/Settings/Conditions"); var form = Settings(WebTests.Field(html, "__RequestVerificationToken"));
         for (var i = 13; i >= 1; i--) Add(form, "Rates", $"row-{i * 7}", $"2026-01-{i:00}", "2,5");
         Add(form, "Taxes", "tax-gap-91", "2026-01-01", "26");
-        var response = await client.PostAsync("/Settings", new FormUrlEncodedContent(form)); html = await response.Content.ReadAsStringAsync();
+        var response = await client.PostAsync("/Settings/Conditions", new FormUrlEncodedContent(form)); html = await response.Content.ReadAsStringAsync();
         Assert.Contains("Conferma la modifica", html);
         using (var before = factory.Services.CreateScope()) Assert.Null((await before.ServiceProvider.GetRequiredService<IAccountStore>().Load()).Document.Ledger);
-        response = await client.PostAsync("/Settings?handler=Confirm", new FormUrlEncodedContent(new Dictionary<string, string>
+        response = await client.PostAsync("/Settings/Conditions?handler=Confirm", new FormUrlEncodedContent(new Dictionary<string, string>
         { ["__RequestVerificationToken"] = WebTests.Field(html, "__RequestVerificationToken"), ["Ticket"] = WebTests.Field(html, "Ticket") }));
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         using var scope = factory.Services.CreateScope(); var saved = (await scope.ServiceProvider.GetRequiredService<IAccountStore>().Load()).Document.Ledger!;
@@ -49,9 +49,9 @@ public sealed class GridFormTests
     public async Task InvalidRowsKeepOtherValuesAndStableKeys(string percentage, string date, string error)
     {
         await using var factory = new AppFactory(); using var client = Client(factory);
-        var html = await client.GetStringAsync("/Settings"); var form = Settings(WebTests.Field(html, "__RequestVerificationToken"));
+        var html = await client.GetStringAsync("/Settings/Conditions"); var form = Settings(WebTests.Field(html, "__RequestVerificationToken"));
         Add(form, "Rates", "first", "2026-01-01", "2,75"); Add(form, "Rates", "last", date, percentage); Add(form, "Taxes", "tax", "2026-01-01", "26");
-        var response = await client.PostAsync("/Settings", new FormUrlEncodedContent(form)); html = await response.Content.ReadAsStringAsync();
+        var response = await client.PostAsync("/Settings/Conditions", new FormUrlEncodedContent(form)); html = await response.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode); Assert.DoesNotContain("Conferma la modifica", html);
         Assert.Contains(error, WebUtility.HtmlDecode(html));
         Assert.Equal("2,75", WebTests.Field(html, "Rates[first].Percentage"));
@@ -70,6 +70,6 @@ public sealed class GridFormTests
         }
         var html = await client.GetStringAsync("/"); Assert.Contains("Riga-01", html); Assert.Contains("Riga-15", html);
         Assert.Contains("data-grid", html); Assert.DoesNotContain("bootstrap", html, StringComparison.OrdinalIgnoreCase);
-        var csv = await client.GetStringAsync("/Transfer?handler=Export&format=csv"); Assert.Contains("Riga-01", csv); Assert.Contains("Riga-15", csv);
+        var csv = await client.GetStringAsync("/Settings/Data?handler=Export&format=csv"); Assert.Contains("Riga-01", csv); Assert.Contains("Riga-15", csv);
     }
 }

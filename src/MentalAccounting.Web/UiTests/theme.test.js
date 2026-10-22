@@ -1,34 +1,42 @@
-import { beforeEach, expect, it, vi } from 'vitest';
+﻿import { beforeEach, expect, it, vi } from 'vitest';
 import source from '../wwwroot/js/theme.js?raw';
-function load(dark = false) {
+function load(dark = false, ready = true) {
     const media = { matches: dark, addEventListener: vi.fn() };
-    window.matchMedia = vi.fn(() => media);
-    window.eval(source);
-    document.dispatchEvent(new Event('DOMContentLoaded'));
+    window.matchMedia = vi.fn(() => media); window.eval(source);
+    if (ready) document.dispatchEvent(new Event('DOMContentLoaded'));
     return media;
 }
 beforeEach(() => {
     const values = new Map();
-    const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), clear: () => values.clear() };
-    Object.defineProperty(window, 'localStorage', { value: storage, configurable: true });
-    vi.stubGlobal('localStorage', storage);
-    localStorage.clear(); document.documentElement.removeAttribute('data-theme');
-    document.body.innerHTML = '<select data-theme-select><option value="system">Sistema</option><option value="light">Chiaro</option><option value="dark">Scuro</option></select>';
+    const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+    Object.defineProperty(window, 'localStorage', { value: storage, configurable: true }); vi.stubGlobal('localStorage', storage);
+    document.documentElement.removeAttribute('data-theme'); document.documentElement.removeAttribute('data-theme-mode');
+    document.body.innerHTML = '<select data-theme-mode-select><option value="automatic">Automatica</option><option value="manual">Manuale</option></select><button data-theme-toggle></button><output data-theme-description></output>';
 });
-it('uses the system preference before DOMContentLoaded and responds to changes', () => {
-    const media = load(true); expect(document.documentElement.dataset.theme).toBe('dark');
+it('applies automatic theme and toggle visibility before DOMContentLoaded', () => {
+    const media = load(true, false);
+    expect(document.documentElement.dataset.theme).toBe('dark'); expect(document.documentElement.dataset.themeMode).toBe('automatic');
+    expect(document.querySelector('button').hidden).toBe(true);
+    document.dispatchEvent(new Event('DOMContentLoaded'));
     media.matches = false; media.addEventListener.mock.calls[0][1](); expect(document.documentElement.dataset.theme).toBe('light');
 });
-it('restores a choice and persists manual changes', () => {
+it('restores an existing manual choice and lets the header toggle change it', () => {
     localStorage.setItem('accantona.theme', 'dark'); const media = load(false);
-    expect(document.documentElement.dataset.theme).toBe('dark');
-    const select = document.querySelector('select'); select.value = 'light'; select.dispatchEvent(new Event('change'));
-    expect(localStorage.getItem('accantona.theme')).toBe('light');
+    const toggle = document.querySelector('button'); expect(toggle.hidden).toBe(false); expect(toggle.textContent).toBe('Chiaro');
+    toggle.click(); expect(localStorage.getItem('accantona.theme')).toBe('light'); expect(document.documentElement.dataset.theme).toBe('light');
     media.matches = true; media.addEventListener.mock.calls[0][1](); expect(document.documentElement.dataset.theme).toBe('light');
 });
-it('works when browser storage is blocked', () => {
+it('keeps effective color when switching to manual and follows system again in automatic', () => {
+    const media = load(true); const select = document.querySelector('select'); select.value = 'manual'; select.dispatchEvent(new Event('change'));
+    expect(localStorage.getItem('accantona.theme')).toBe('dark'); expect(document.querySelector('button').hidden).toBe(false);
+    select.value = 'automatic'; select.dispatchEvent(new Event('change')); expect(document.querySelector('button').hidden).toBe(true);
+    media.matches = false; media.addEventListener.mock.calls[0][1](); expect(document.documentElement.dataset.theme).toBe('light');
+});
+it('works without storage and emits a theme event for the chart', () => {
     const get = vi.spyOn(localStorage, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
     const set = vi.spyOn(localStorage, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
-    load(false); const select = document.querySelector('select'); select.value = 'dark'; select.dispatchEvent(new Event('change'));
-    expect(document.documentElement.dataset.theme).toBe('dark'); get.mockRestore(); set.mockRestore();
+    const changed = vi.fn(); window.addEventListener('accantona:themechange', changed);
+    load(false); const select = document.querySelector('select'); select.value = 'manual'; select.dispatchEvent(new Event('change'));
+    document.querySelector('button').click(); expect(document.documentElement.dataset.theme).toBe('dark'); expect(changed).toHaveBeenCalled();
+    window.removeEventListener('accantona:themechange', changed); get.mockRestore(); set.mockRestore();
 });

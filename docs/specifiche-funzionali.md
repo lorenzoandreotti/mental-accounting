@@ -24,7 +24,13 @@ Dashboard con saldo disponibile, maturato lordo, imposta e netto, incluso il mat
 Esportazione CSV dei movimenti e riepiloghi; backup JSON versionato e ripristino con anteprima. Backup applicativo senza account/password. Gli scenari vengono inclusi nel backup.
 
 ## Interfaccia
-Tema Sistema/Chiaro/Scuro, con default Sistema e scelta ricordata nel browser. Tassi, aliquote e ipotesi future vengono inseriti tramite griglie con aggiunta/rimozione di righe. Tutte le griglie dati supportano ordinamento, filtri combinati per colonna e paginazione 10/25/50 righe; la Panoramica consulta l'intero storico. I filtri non cambiano i totali contabili, i dati esportati o le righe inviate alla conferma. Le validazioni mantengono i valori e indicano le righe da correggere. Nessun salvataggio implicito.
+La pagina principale Movimenti riunisce riepiloghi, storico del saldo, modulo espandibile e cronologia dell'intero accantonamento. La cronologia include versamenti, prelievi, addebiti e una riga per ogni accredito netto effettivo. Gli interessi automatici sono consultabili ma non modificabili; lordo, imposta, periodo e collegamento al calcolo sono nel dettaglio della riga. I periodi chiusi in attesa restano nei riepiloghi e nel Dettaglio interessi, senza entrare nei movimenti disponibili.
+
+Il grafico mostra due serie giornaliere a fine giornata: disponibile e totale comprensivo del netto maturato, anche già chiuso ma non pagato. Default Tutto; intervalli 1/3/6 mesi, 1 anno e personalizzato, limitati ai giorni disponibili fino a oggi. Il periodo del grafico è indipendente dai filtri della griglia. È possibile leggere i valori per data senza usare il tooltip.
+
+Impostazioni contiene Condizioni di calcolo, Aspetto e Importa/Esporta. Tema Automatico (default, segue il sistema e nasconde il toggle nell'intestazione) o Manuale (toggle Chiaro/Scuro disponibile anche nel login). Preferenza locale al browser; passando a Manuale si mantiene il tema effettivo. Le vecchie preferenze del browser rimangono compatibili.
+
+Tassi, aliquote e ipotesi future vengono inseriti tramite griglie con aggiunta/rimozione di righe. Tutte le griglie dati supportano ordinamento, filtri combinati per colonna e paginazione 10/25/50 righe. I filtri non cambiano i totali contabili, il grafico, i dati esportati o le righe inviate alla conferma. Le validazioni mantengono i valori e indicano le righe da correggere. Nessun salvataggio implicito dei dati contabili; le sole preferenze di aspetto si applicano subito.
 
 ## Default
 Nell'importazione sono accettati anche prelievi/addebiti con segno negativo, normalizzati a importo positivo con segnalazione. Si eliminano esclusivamente residui binari Excel inferiori a 0,00000001 euro rispetto al centesimo; vere frazioni di centesimo restano errori.
