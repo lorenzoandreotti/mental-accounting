@@ -57,6 +57,8 @@ Le griglie offrono filtri per colonna, ordinamento e pagine da 10/25/50 righe. I
 
 ## Pubblicazione su Linux
 
+Per una prova su Windows con Docker Desktop e reverse proxy esterno, vedere [Prova locale dello stack Docker](docs/docker-locale.md).
+
 Docker Engine con Compose plugin, reverse proxy HTTPS già disponibile e hostname sono prerequisiti. Nessuna porta PostgreSQL pubblica.
 
 ```sh
@@ -70,7 +72,7 @@ docker compose -f deploy/compose.yaml run --rm web create-user
 docker compose -f deploy/compose.yaml up -d
 ```
 
-La porta web è esposta su loopback. Configurare il proxy con [l'esempio Nginx](deploy/nginx.conf.example). `TRUSTED_PROXY_IP` deve coincidere con l'IP sorgente visto dal container: su Docker può essere l'IP del gateway della rete frontend, ricavabile con `docker network inspect mental-accounting_frontend`. Non usare una rete fidata universale. Per accesso VPN usare lo stesso hostname HTTPS tramite proxy; nessun bypass del login. `/health` restituisce salute database senza dettagli. Verificare prima del rilascio login/logout, cookie Secure, redirect HTTPS e impossibilità di falsificare gli header inoltrati.
+La porta web è esposta su loopback. Il reverse proxy HTTPS viene configurato e gestito esternamente allo stack. `TRUSTED_PROXY_IP` deve coincidere con l'IP sorgente visto dal container: su Docker può essere l'IP del gateway della rete frontend, ricavabile con `docker network inspect mental-accounting_frontend`. Non usare una rete fidata universale. Per accesso VPN usare lo stesso hostname HTTPS tramite proxy; nessun bypass del login. `/health` restituisce salute database senza dettagli. Verificare prima del rilascio login/logout, cookie Secure, redirect HTTPS e impossibilità di falsificare gli header inoltrati.
 
 Per aggiornare: eseguire backup, fermare web, ricostruire l'immagine, applicare `migrate` e riavviare. Le migrazioni non partono automaticamente. In caso di errore mantenere web fermo e ripristinare backup e immagine precedente.
 
