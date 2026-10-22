@@ -22,6 +22,10 @@
   small { @apply text-xs leading-relaxed; color:var(--muted); }
 }
 @layer components {
+  .movement-dialog { @apply m-auto w-[calc(100%-2rem)] max-w-2xl max-h-[90dvh] overflow-y-auto rounded-xl border p-0; background:var(--surface); color:var(--ink); border-color:var(--line); }
+  .movement-dialog::backdrop { background:rgb(0 0 0 / .6); }
+  .modal-body { @apply p-4 sm:p-6; }
+  .modal-actions { @apply sticky bottom-0 mt-5 flex flex-wrap justify-end gap-2 border-t py-3; background:var(--surface); border-color:var(--line); }
   .shell { @apply mx-auto w-full max-w-7xl px-4 sm:px-6; }
   .panel { @apply min-w-0 rounded-xl border p-4 sm:p-5; border-color:var(--line); background:var(--surface); }
   .page-heading { @apply mb-6 flex flex-wrap items-center justify-between gap-4; }

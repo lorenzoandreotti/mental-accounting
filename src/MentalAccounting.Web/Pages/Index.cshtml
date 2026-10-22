@@ -5,10 +5,9 @@
 @inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider FileVersions
 @{ ViewData["Title"] = "Movimenti"; }
 <div class="page-heading"><div><p class="eyebrow">IL TUO ACCANTONAMENTO</p><h1>Movimenti</h1><p class="muted mb-0">Situazione al @Model.AsOfDate.ToString("dd MMMM yyyy")</p></div>
-@if(Model.Result is not null){<a asp-route-add="true" asp-fragment="movement-form" class="button button-primary">Nuovo movimento</a>}</div>
-<div asp-validation-summary="All" class="validation" role="alert"></div>
-@if(Model.Review is {} review){<partial name="_Review" model="review"/>}
-else if(Model.Result is not {} r){
+@if(Model.Result is not null){<a asp-route-add="true" asp-fragment="movement-form" data-movement-open class="button button-primary">Nuovo movimento</a>}</div>
+@if(!Model.FormOpen && !Model.DeleteOpen){<div asp-validation-summary="All" class="validation" role="alert"></div>}
+@if(Model.Result is not {} r){
 <section class="panel"><h2>Inizia dal tuo saldo</h2><p>Imposta data iniziale, tasso, tassazione e calendario. Puoi poi recuperare i movimenti dal foglio Excel.</p><a asp-page="/Settings/Conditions" class="button button-primary">Configura accantonamento</a></section>
 }else{
 <section class="grid gap-4 sm:grid-cols-2 mb-5" aria-label="Riepilogo">
@@ -29,16 +28,36 @@ else if(Model.Result is not {} r){
 <div class="mt-4 border-t border-[var(--line)] pt-4"><label for="history-day" class="field-label">Leggi i valori di una data</label><input type="date" id="history-day" class="field max-w-56" data-chart-day/><output class="block mt-3 text-sm" data-chart-values aria-live="polite"></output></div>
 <noscript><p class="notice">Attiva JavaScript per consultare il grafico. I riepiloghi e la cronologia restano disponibili.</p></noscript>
 </section>
-<details id="movement-form" class="panel mb-5" open="@(Model.FormOpen ? "open" : null)">
-<summary class="font-medium">@(Model.Id is null ? "Nuovo movimento" : "Modifica movimento")</summary>
-<form method="post" class="mt-4"><input asp-for="Version" type="hidden"/><input asp-for="Id" type="hidden"/>
-<div class="grid gap-4 sm:grid-cols-3"><div><label asp-for="Date" class="field-label">Data di valuta</label><input asp-for="Date" type="date" class="field"/></div><div><label asp-for="Kind" class="field-label">Tipo</label><select asp-for="Kind" class="field">@foreach(var k in Enum.GetValues<MentalAccounting.Domain.MovementKind>()){<option value="@k">@Labels.Movement(k)</option>}</select></div><div><label asp-for="Amount" class="field-label">Importo (€)</label><input asp-for="Amount" type="text" inputmode="decimal" class="field" placeholder="100,00"/></div><div class="sm:col-span-3"><label asp-for="Note" class="field-label">Nota facoltativa</label><input asp-for="Note" class="field" maxlength="500"/></div></div><button class="button button-primary mt-4">Verifica modifica</button>
-@if(Model.Id is not null){<a asp-page="/Index" class="button">Annulla modifica</a>}</form></details>
+<dialog id="movement-form" class="movement-dialog" data-modal data-auto-open="@(Model.FormOpen ? "true" : "false")" aria-labelledby="movement-title"><div class="modal-body">
+<div class="flex items-start justify-between gap-3"><h2 id="movement-title">@(Model.Id is null ? "Nuovo movimento" : "Modifica movimento")</h2><button type="button" class="button button-small" data-modal-close aria-label="Chiudi">&times;</button></div>
+<div asp-validation-summary="All" class="validation" role="alert"></div>
+<form method="post" data-movement-form data-today="@Model.AsOfDate.ToString("yyyy-MM-dd")" data-prevent-repeat><input asp-for="Version" type="hidden"/><input asp-for="Id" type="hidden"/>
+<div class="grid gap-4 sm:grid-cols-2">
+<div><label asp-for="Date" class="field-label">Data di valuta</label><input asp-for="Date" type="date" class="field" required/><span asp-validation-for="Date"></span></div>
+<div><label asp-for="Kind" class="field-label">Tipo</label><select asp-for="Kind" class="field">@foreach(var k in Enum.GetValues<MentalAccounting.Domain.MovementKind>()){<option value="@k">@Labels.Movement(k)</option>}</select><span asp-validation-for="Kind"></span></div>
+<div><label asp-for="Amount" class="field-label">Importo (&euro;)</label><input asp-for="Amount" type="text" inputmode="decimal" class="field" placeholder="100,00" required/><span asp-validation-for="Amount"></span></div>
+<div class="sm:col-span-2"><label asp-for="Note" class="field-label">Nota facoltativa</label><input asp-for="Note" class="field" maxlength="500"/><span asp-validation-for="Note"></span></div></div>
+<div class="modal-actions"><button class="button button-primary" disabled="@(Model.Conflict ? "disabled" : null)">Salva movimento</button><button type="button" class="button" data-modal-close>Annulla</button>@if(Model.Conflict){<a asp-page="/Index" class="button">Ricarica i dati</a>}</div>
+</form></div></dialog>
 <section class="panel"><h2>Cronologia</h2><p class="text-xs muted">Gli interessi accreditati sono calcolati automaticamente. Filtri e ordinamento non modificano saldo e grafico.</p>
 <div data-grid data-sort="0:desc" aria-label="Cronologia movimenti e interessi"><div class="table-scroll"><table class="data-table"><thead><tr><th data-type="date">Data</th><th data-type="select">Tipo</th><th data-type="text">Descrizione</th><th data-type="number">Importo (€)</th><th data-type="none">Azioni e dettaglio</th></tr></thead><tbody>
 @foreach(var entry in Model.Activities){<tr data-activity-type="@entry.Type"><td data-value="@entry.Date.ToString("yyyy-MM-dd")">@entry.Date.ToString("dd/MM/yyyy")</td><td data-value="@entry.Type">@(entry.Type=="Interest" ? "Interessi" : Labels.Movement(Enum.Parse<MentalAccounting.Domain.MovementKind>(entry.Type)))</td><td>@entry.Note</td><td data-value="@entry.Amount.ToString(CultureInfo.InvariantCulture)">@entry.Amount.ToString("+0.00 €;-0.00 €;0.00 €")</td><td>
 @if(entry.Interest is {} interest){<details><summary class="text-sm">Dettaglio accredito</summary><dl class="text-xs mt-2 space-y-1"><dt>Periodo</dt><dd>@interest.From.ToString("dd/MM/yyyy") – @interest.Through.ToString("dd/MM/yyyy")</dd><dt>Lordo</dt><dd>@interest.Gross.ToString("C")</dd><dt>Imposta</dt><dd>@interest.Tax.ToString("C")</dd><dt>Netto</dt><dd>@interest.Net.ToString("C")</dd></dl><a asp-page="/Interest" asp-route-PeriodStart="@interest.From.ToString("yyyy-MM-dd")" asp-route-Through="@interest.Through.ToString("yyyy-MM-dd")" class="text-xs">Vedi il calcolo del periodo</a></details>}
-else if(entry.MovementId is {} id){<div class="flex gap-2"><a asp-page="/Index" asp-route-edit="@id" asp-fragment="movement-form" class="button button-small">Modifica</a><form method="post" asp-page-handler="Delete"><input name="Version" value="@Model.State.Version" type="hidden"/><input name="id" value="@id" type="hidden"/><button class="button button-small button-danger">Elimina</button></form></div>}
+else if(entry.MovementId is {} id){<div class="flex gap-2"><a asp-page="/Index" asp-route-edit="@id" asp-fragment="movement-form" data-movement-edit data-id="@id" data-date="@entry.Date.ToString("yyyy-MM-dd")" data-kind="@entry.Type" data-amount="@Math.Abs(entry.Amount).ToString("0.00",CultureInfo.GetCultureInfo("it-IT"))" data-note="@entry.Note" class="button button-small">Modifica</a><form method="post" asp-page-handler="Delete"><input name="Version" value="@Model.State.Version" type="hidden"/><input name="id" value="@id" type="hidden"/><button id="delete-@id" class="button button-small button-danger">Elimina</button></form></div>}
 </td></tr>}
 </tbody></table></div></div></section>
 }
+
+<dialog id="delete-movement" data-return-focus="delete-@Model.Deleting?.Id" class="movement-dialog" data-modal data-auto-open="@(Model.DeleteOpen ? "true" : "false")" aria-labelledby="delete-title"><div class="modal-body">
+<div class="flex items-start justify-between gap-3"><h2 id="delete-title">Elimina movimento</h2><button type="button" class="button button-small" data-modal-close aria-label="Chiudi">&times;</button></div>
+@if(Model.DeleteOpen){<div asp-validation-summary="All" class="validation" role="alert"></div>}
+@if(Model.Deleting is {} deleting){<p>@deleting.Date.ToString("dd/MM/yyyy") &middot; @Labels.Movement(deleting.Kind) &middot; @deleting.Amount.ToString("C")<br/>@deleting.Note</p>}
+@if(Model.Review is {} deletion){
+<p class="muted text-sm">Confermando, saldo e interessi saranno ricalcolati su tutto lo storico.</p>
+<div class="table-scroll"><table class="data-table"><thead><tr><th>Riepilogo</th><th>Attuale</th><th>Dopo l'eliminazione</th><th>Differenza</th></tr></thead><tbody>
+<tr><th>Saldo disponibile</th><td>@deletion.Change.Before!.Balance.ToString("C")</td><td>@deletion.Change.After.Balance.ToString("C")</td><td>@((deletion.Change.After.Balance-deletion.Change.Before.Balance).ToString("+0.00 €;-0.00 €;0.00 €"))</td></tr>
+<tr><th>Interessi netti da accreditare</th><td>@deletion.Change.Before.AccruedNet.ToString("C")</td><td>@deletion.Change.After.AccruedNet.ToString("C")</td><td>@((deletion.Change.After.AccruedNet-deletion.Change.Before.AccruedNet).ToString("+0.00 €;-0.00 €;0.00 €"))</td></tr>
+</tbody></table></div>
+<form method="post" asp-page-handler="DeleteConfirm" data-prevent-repeat><input type="hidden" name="DeleteTicket" value="@deletion.Ticket"/><div class="modal-actions"><button class="button button-danger">Conferma eliminazione</button><button type="button" class="button" data-modal-close>Annulla</button></div></form>
+}else{<div class="modal-actions"><button type="button" class="button" data-modal-close>Chiudi</button><a asp-page="/Index" class="button">Ricarica i dati</a></div>}
+</div></dialog>

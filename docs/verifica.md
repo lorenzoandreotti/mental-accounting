@@ -44,3 +44,15 @@ Il foglio originale non è stato modificato né incluso nel repository. Nell'imp
 - **16 test JavaScript superati**: 8 griglie, 4 tema, 4 grafico. Verificati intervalli inclusivi, febbraio bisestile, indipendenza dai filtri e aggiornamento dei colori.
 - Pubblicazione Release riuscita con CSS e bundle del grafico inclusi; pipeline Docker aggiornata per copiare entrambi gli asset.
 - Nessun processo dell'utente o PostgreSQL fermato durante questo intervento. Controllo browser riprovato: nessuna superficie browser disponibile; verifica visiva e build Docker restano da eseguire sulla destinazione.
+
+
+## Modal dei movimenti (22 ottobre 2026)
+
+Inserimento e modifica salvano direttamente dal dialog; cancellazione con anteprima server e confronto dei riepiloghi nel dialog, ticket dedicato e conferma esplicita. Nessuna migrazione o modifica ai backup.
+
+- Suite .NET Release: 55 test superati (24 dominio, 7 applicazione, 24 integrazione), nessuno saltato. Inclusi test PostgreSQL sul solo database dedicato accounting_test e lettura del foglio originale senza modifiche.
+- JavaScript: 20 test superati, inclusi apertura/chiusura, focus, compilazione, conservazione errori e invii ripetuti dei modal. Escape verificato come comportamento nativo non intercettato; jsdom usa uno stub delle API dialog.
+- Asset: npm run ui:build riuscito; esbuild richiede esecuzione fuori dalla sandbox locale per leggere i percorsi degli antenati del progetto.
+- Pubblicazione Release riuscita in .local/publish-modal con asset precompilati (SkipUiBuild=true).
+- Browser: nessuna superficie disponibile nel controllo UI. Restano da verificare visivamente temi, focus trap nativo e viewport desktop/mobile in un browser reale.
+- PostgreSQL trovato attivo su 127.0.0.1:55432; nessun processo dell'utente avviato o fermato.

@@ -66,9 +66,9 @@ public sealed class OrganizationTests
         using var history = JsonDocument.Parse(json); var last = history.RootElement.EnumerateArray().Last();
         Assert.Equal(calculation.Balance, last.GetProperty("available").GetDecimal());
         Assert.Equal(calculation.Balance + calculation.AccruedNet, last.GetProperty("total").GetDecimal());
-        Assert.DoesNotContain(" open", Regex.Match(html, "<details id=\"movement-form\"[^>]*>").Value);
+        Assert.Contains("data-auto-open=\"false\"", Regex.Match(html, "<dialog id=\"movement-form\"[^>]*>").Value);
         var id = ledger.Movements[0].Id; var edit = await client.GetStringAsync($"/?edit={id}");
-        Assert.Contains("open", Regex.Match(edit, "<details id=\"movement-form\"[^>]*>").Value);
+        Assert.Contains("data-auto-open=\"true\"", Regex.Match(edit, "<dialog id=\"movement-form\"[^>]*>").Value);
         Assert.Equal("100", WebTests.Field(edit, "Amount"));
     }
     [Fact] public async Task InterestLinkShowsOnlySelectedPeriodAndCorrectCreditedState()
@@ -87,7 +87,7 @@ public sealed class OrganizationTests
         var response = await client.PostAsync("/", new FormUrlEncodedContent(new Dictionary<string,string>
         { ["__RequestVerificationToken"] = WebTests.Field(html, "__RequestVerificationToken"), ["Version"] = "1", ["Date"] = "2026-01-20", ["Kind"] = "Withdrawal", ["Amount"] = "2000", ["Note"] = "Da correggere" }));
         var invalid = await response.Content.ReadAsStringAsync(); Assert.Contains("Saldo negativo", invalid);
-        Assert.Contains("open", Regex.Match(invalid, "<details id=\"movement-form\"[^>]*>").Value); Assert.Equal("Da correggere", WebTests.Field(invalid, "Note"));
+        Assert.Contains("data-auto-open=\"true\"", Regex.Match(invalid, "<dialog id=\"movement-form\"[^>]*>").Value); Assert.Equal("Da correggere", WebTests.Field(invalid, "Note"));
         response = await client.PostAsync("/?handler=Delete", new FormUrlEncodedContent(new Dictionary<string,string>
         { ["__RequestVerificationToken"] = WebTests.Field(invalid, "__RequestVerificationToken"), ["Version"] = "1", ["id"] = Guid.Empty.ToString() }));
         Assert.Contains("non modificabile", await response.Content.ReadAsStringAsync());

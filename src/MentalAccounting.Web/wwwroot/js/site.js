@@ -1,5 +1,7 @@
+import { initializeMovementModals } from './movement-modal.js';
 ﻿import { initializeGrids } from './grid.js';
 initializeGrids();
+initializeMovementModals();
 document.querySelector('.input-validation-error')?.focus();
 const toggle = document.querySelector('[data-nav-toggle]');
 const navigation = document.querySelector('[data-navigation]');

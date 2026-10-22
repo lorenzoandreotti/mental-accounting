@@ -4,7 +4,7 @@
 Webapp personale, in italiano, per un solo accantonamento virtuale in euro all'interno di un conto deposito. Nessuna integrazione bancaria, gestione del resto del conto o modalità offline.
 
 ## Saldo e movimenti
-Versamenti, prelievi e addebiti manuali per costi/bollo hanno data, importo positivo e nota facoltativa. Modificano il saldo remunerato dalla data indicata. Gli interessi non accreditati sono separati e non prelevabili. Non è ammesso saldo negativo, neppure nello storico modificato. Modifiche e cancellazioni richiedono anteprima e conferma, ricalcolando i periodi successivi. Operazioni simultanee da dispositivi diversi non devono sovrascriversi.
+Versamenti, prelievi e addebiti manuali per costi/bollo hanno data, importo positivo e nota facoltativa. Modificano il saldo remunerato dalla data indicata. Gli interessi non accreditati sono separati e non prelevabili. Non è ammesso saldo negativo, neppure nello storico modificato. Inserimento e modifica salvano direttamente dal modal con validazione server e ricalcolo dei periodi successivi. La cancellazione richiede anteprima e conferma in un modal dedicato, con saldo disponibile e interessi netti da accreditare prima/dopo e relative differenze. Operazioni simultanee da dispositivi diversi non devono sovrascriversi.
 
 ## Interessi
 Lo storico usa interesse semplice: capitale × tasso annuo lordo × giorni / base annua. Basi configurabili: ACT/360, ACT/365 fisso e ACT/anno effettivo (365 o 366). Tassi e aliquote sono percentuali con decorrenza; l'aliquota si applica nei giorni di maturazione, la trattenuta avviene alla chiusura. Occorre una condizione valida alla data iniziale; nessun valore implicito di tasso o imposta.
@@ -24,7 +24,7 @@ Dashboard con saldo disponibile, maturato lordo, imposta e netto, incluso il mat
 Esportazione CSV dei movimenti e riepiloghi; backup JSON versionato e ripristino con anteprima. Backup applicativo senza account/password. Gli scenari vengono inclusi nel backup.
 
 ## Interfaccia
-La pagina principale Movimenti riunisce riepiloghi, storico del saldo, modulo espandibile e cronologia dell'intero accantonamento. La cronologia include versamenti, prelievi, addebiti e una riga per ogni accredito netto effettivo. Gli interessi automatici sono consultabili ma non modificabili; lordo, imposta, periodo e collegamento al calcolo sono nel dettaglio della riga. I periodi chiusi in attesa restano nei riepiloghi e nel Dettaglio interessi, senza entrare nei movimenti disponibili.
+La pagina principale Movimenti riunisce riepiloghi, storico del saldo, modal di inserimento e modifica e cronologia dell'intero accantonamento. La cronologia include versamenti, prelievi, addebiti e una riga per ogni accredito netto effettivo. Gli interessi automatici sono consultabili ma non modificabili; lordo, imposta, periodo e collegamento al calcolo sono nel dettaglio della riga. I periodi chiusi in attesa restano nei riepiloghi e nel Dettaglio interessi, senza entrare nei movimenti disponibili.
 
 Il grafico mostra due serie giornaliere a fine giornata: disponibile e totale comprensivo del netto maturato, anche già chiuso ma non pagato. Default Tutto; intervalli 1/3/6 mesi, 1 anno e personalizzato, limitati ai giorni disponibili fino a oggi. Il periodo del grafico è indipendente dai filtri della griglia. È possibile leggere i valori per data senza usare il tooltip.
 

@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+using System.Security.Cryptography;
 using MentalAccounting.Application;
 using MentalAccounting.Domain;
 using Microsoft.AspNetCore.DataProtection;
@@ -14,6 +16,11 @@ public sealed class IndexModel(AccountingService service, IDataProtectionProvide
     public CalculationResult? Result { get; private set; }
     public IReadOnlyList<AccountActivity> Activities { get; private set; } = [];
     public bool FormOpen { get; private set; }
+    public bool DeleteOpen { get; private set; }
+    public bool Conflict { get; private set; }
+    public Movement? Deleting { get; private set; }
+    [BindProperty] public string DeleteTicket { get; set; } = "";
+    private IDataProtector DeleteProtector => Protector.CreateProtector("DeleteMovement.v1");
     public DateOnly AsOfDate => Today;
     private async Task LoadScreen()
     {
@@ -33,7 +40,7 @@ public sealed class IndexModel(AccountingService service, IDataProtectionProvide
     }
     public async Task<IActionResult> OnPostAsync()
     {
-        var version = Version; await LoadScreen(); FormOpen=true;
+        var version = Version; await LoadScreen(); Version=version; FormOpen=true;
         if (!ModelState.IsValid) return Page();
         try
         {
@@ -41,15 +48,44 @@ public sealed class IndexModel(AccountingService service, IDataProtectionProvide
             if (Id is not null && ledger.Movements.All(x=>x.Id!=Id)) throw new BusinessException("Movimento non trovato.");
             var movements = ledger.Movements.Where(x=>x.Id!=Id).ToList();
             movements.Add(new(Id ?? Guid.NewGuid(), Date, Kind, Amount, Note));
-            return await Preview(State.Document with { Ledger = ledger with { Movements = movements } }, version);
+            await Service.Commit(State.Document with { Ledger = ledger with { Movements = movements } }, version, Today, HttpContext.RequestAborted);
+            TempData["Message"]="Movimento salvato. Saldo e interessi sono stati ricalcolati.";
+            return RedirectToPage("/Index");
         }
-        catch(Exception e) when(e is BusinessException or ConcurrencyException) { return Failure(e); }
+        catch(Exception e) when(e is BusinessException or ConcurrencyException) { Conflict=e is ConcurrencyException; return Failure(e); }
     }
     public async Task<IActionResult> OnPostDeleteAsync(Guid id)
     {
-        var version = Version; await LoadScreen(); FormOpen=true;
-        ModelState.Remove(nameof(Amount));
-        try { var ledger = RequireLedger(); if(!ledger.Movements.Any(x=>x.Id==id)) throw new BusinessException("Movimento non trovato o non modificabile."); return await Preview(State.Document with { Ledger = ledger with { Movements = ledger.Movements.Where(x=>x.Id!=id).ToList() } }, version); }
+        var version = Version; await LoadScreen(); DeleteOpen=true;
+        ModelState.Clear();
+        try
+        {
+            var ledger=RequireLedger();
+            Deleting=ledger.Movements.SingleOrDefault(x=>x.Id==id) ?? throw new BusinessException("Movimento non trovato o non modificabile.");
+            var document=State.Document with { Ledger=ledger with { Movements=ledger.Movements.Where(x=>x.Id!=id).ToList() } };
+            var preview=await Service.Preview(document,version,Today,HttpContext.RequestAborted);
+            var ticket=DeleteProtector.Protect(JsonSerializer.Serialize(new ReviewTicket(version,document,Clock.GetUtcNow().AddMinutes(30)),BackupFormat.Options));
+            Review=new(preview,ticket);
+            return Page();
+        }
         catch(Exception e) when(e is BusinessException or ConcurrencyException) { return Failure(e); }
+    }
+    public async Task<IActionResult> OnPostDeleteConfirmAsync()
+    {
+        ModelState.Clear();
+        try
+        {
+            if(string.IsNullOrWhiteSpace(DeleteTicket)) throw new BusinessException("Anteprima mancante. Ripetere l'eliminazione.");
+            var ticket=JsonSerializer.Deserialize<ReviewTicket>(DeleteProtector.Unprotect(DeleteTicket),BackupFormat.Options) ?? throw new BusinessException("Anteprima non valida.");
+            if(ticket.Expires<=Clock.GetUtcNow()) throw new BusinessException("Anteprima scaduta. Ripetere l'eliminazione.");
+            await Service.Commit(ticket.Document,ticket.Version,Today,HttpContext.RequestAborted);
+            TempData["Message"]="Movimento eliminato. Saldo e interessi sono stati ricalcolati.";
+            return RedirectToPage("/Index");
+        }
+        catch(Exception e) when(e is BusinessException or ConcurrencyException or CryptographicException or JsonException)
+        {
+            await LoadScreen(); DeleteOpen=true;
+            return Failure(e is CryptographicException or JsonException ? new BusinessException("Anteprima non valida. Ripetere l'eliminazione.") : e);
+        }
     }
 }

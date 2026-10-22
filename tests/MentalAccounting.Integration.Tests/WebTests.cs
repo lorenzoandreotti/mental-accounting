@@ -40,8 +40,7 @@ public sealed class WebTests
         var moves=await client.GetStringAsync("/");
         var movement=await client.PostAsync("/",new FormUrlEncodedContent(new Dictionary<string,string>{
             {"__RequestVerificationToken",Field(moves,"__RequestVerificationToken")},{"Version","1"},{"Date","2026-02-10"},{"Kind","Deposit"},{"Amount","50,25"},{"Note","Vacanze"}}));
-        review=await movement.Content.ReadAsStringAsync();Assert.Contains("Conferma la modifica",review);
-        Assert.Equal(HttpStatusCode.Redirect,(await Confirm(client,"/",review)).StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect,movement.StatusCode);
         Assert.Contains("Vacanze",await client.GetStringAsync("/"));
         foreach(var path in new[]{"/Interest","/Simulations","/Settings/Data","/Settings/Conditions"})Assert.Equal(HttpStatusCode.OK,(await client.GetAsync(path)).StatusCode);
         var json=await client.GetStringAsync("/Settings/Data?handler=Export&format=json");Assert.Contains("50.25",json);

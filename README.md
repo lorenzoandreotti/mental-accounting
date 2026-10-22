@@ -25,7 +25,7 @@ dotnet test
 
 ## Interfaccia e sviluppo degli stili
 
-L'interfaccia usa Tailwind CSS, senza Bootstrap, jQuery o dipendenze CDN. La pagina iniziale **Movimenti** comprende riepiloghi, grafico del saldo, modulo espandibile e cronologia unificata: versamenti, prelievi, addebiti e interessi netti già accreditati. Gli accrediti automatici sono consultabili e filtrabili ma non modificabili. Il loro dettaglio collega al calcolo del periodo.
+L'interfaccia usa Tailwind CSS, senza Bootstrap, jQuery o dipendenze CDN. La pagina iniziale **Movimenti** comprende riepiloghi, grafico del saldo, modal di inserimento e modifica e cronologia unificata: versamenti, prelievi, addebiti e interessi netti già accreditati. Gli accrediti automatici sono consultabili e filtrabili ma non modificabili. Il loro dettaglio collega al calcolo del periodo. Nuovo movimento e Modifica aprono un modal con salvataggio diretto; Elimina mostra prima un modal con confronto fra situazione attuale e successiva alla cancellazione. Errori e conflitti non sovrascrivono i dati: i valori inseriti restano disponibili e un conflitto richiede di ricaricare esplicitamente.
 
 La navigazione comprende Movimenti, Dettaglio interessi, Simulazioni e Impostazioni. Quest'ultima contiene tre sottopagine: **Condizioni di calcolo**, **Aspetto** e **Importa/Esporta**. I vecchi indirizzi `/Movements`, `/Settings` e `/Transfer` reindirizzano alle nuove pagine, mantenendo i parametri di modifica e download.
 
