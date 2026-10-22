@@ -1,0 +1,41 @@
+name: mental-accounting
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mental_accounting
+      POSTGRES_USER: mental_accounting
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Impostare POSTGRES_PASSWORD in .env}
+    volumes:
+      - database:/var/lib/postgresql/data
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U mental_accounting -d mental_accounting"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  web:
+    build:
+      context: ..
+      dockerfile: src/MentalAccounting.Web/Dockerfile
+    restart: unless-stopped
+    ports: ["127.0.0.1:${HTTP_PORT:-8080}:8080"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Accounting: "Host=db;Database=mental_accounting;Username=mental_accounting;Password=${POSTGRES_PASSWORD}"
+      ReverseProxy__KnownProxies__0: ${TRUSTED_PROXY_IP:?Impostare IP del proxy fidato}
+      AllowedHosts: ${ALLOWED_HOSTS:?Impostare hostname del sito}
+      ASPNETCORE_HTTPS_PORT: "443"
+    volumes:
+      - keys:/data/keys
+    depends_on:
+      db: {condition: service_healthy}
+    networks: [database, frontend]
+networks:
+  database:
+    internal: true
+  frontend:
+volumes:
+  database:
+  keys:

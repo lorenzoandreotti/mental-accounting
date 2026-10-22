@@ -1,0 +1,23 @@
+@model MentalAccounting.Web.Pages.ReviewView
+<section class="card card-body review">
+<p class="eyebrow">VERIFICA PRIMA DI SALVARE</p><h2>Conferma la modifica</h2>
+<p>Il calcolo comprende tutti i movimenti fino a oggi. Gli accrediti successivi alle modifiche vengono ricalcolati.</p>
+<div class="row g-3"><div class="col-sm-6"><span class="text-secondary">Saldo precedente</span><div class="fs-3">@(Model.Change.Before?.Balance.ToString("C") ?? "—")</div></div>
+<div class="col-sm-6"><span class="text-secondary">Nuovo saldo</span><div class="fs-3">@Model.Change.After.Balance.ToString("C")</div></div></div>
+<p class="mt-3">Netto maturato: @(Model.Change.Before?.AccruedNet.ToString("C") ?? "—") → <strong>@Model.Change.After.AccruedNet.ToString("C")</strong></p>
+@{var ledger = Model.Change.Document.Ledger!;}
+<dl class="row"><dt class="col-sm-4">Avvio e saldo iniziale</dt><dd class="col-sm-8">@ledger.Start.ToString("dd/MM/yyyy") · @ledger.OpeningBalance.ToString("C")</dd>
+<dt class="col-sm-4">Registrazioni</dt><dd class="col-sm-8">@ledger.Movements.Count movimenti · @ledger.Rates.Count tassi · @ledger.Taxes.Count aliquote · @Model.Change.Document.Scenarios.Count scenari</dd>
+<dt class="col-sm-4">Periodicità</dt><dd class="col-sm-8">Ogni @ledger.Calendar.Months mesi · @(ledger.Calendar.Civil ? "periodi civili" : $"riferimento {ledger.Calendar.Anchor:dd/MM/yyyy}")</dd></dl>
+<details class="mb-3"><summary>Controlla i dati proposti</summary>
+<h3 class="h5 mt-3">Movimenti</h3><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Data</th><th>Tipo</th><th>Importo</th><th>Nota</th></tr></thead><tbody>
+@foreach(var m in ledger.Movements.OrderBy(x=>x.Date)){<tr><td>@m.Date.ToString("dd/MM/yyyy")</td><td>@Labels.Movement(m.Kind)</td><td>@m.Amount.ToString("C")</td><td>@m.Note</td></tr>}
+</tbody></table></div><h3 class="h5">Condizioni</h3>
+@foreach(var r in ledger.Rates.OrderBy(x=>x.From)){<p>Tasso dal @r.From.ToString("dd/MM/yyyy"): @r.Rate.ToString("P4")</p>}
+@foreach(var t in ledger.Taxes.OrderBy(x=>x.From)){<p>Imposta dal @t.From.ToString("dd/MM/yyyy"): @t.Rate.ToString("P2")</p>}
+<p>Base: @Labels.Basis(ledger.Basis). Accredito: @Labels.Timing(ledger.Calendar.Timing), giorno @ledger.Calendar.CreditDay. Maturato iniziale: lordo @ledger.OpeningGross.ToString("C"), imposta @ledger.OpeningTax.ToString("C").</p>
+<h3 class="h5">Scenari proposti</h3>
+@foreach(var s in Model.Change.Document.Scenarios){<p>@s.Name · fino al @s.Through.ToString("dd/MM/yyyy") · @(s.Method==MentalAccounting.Domain.InterestMethod.Simple?"semplice":"composto") · @s.Ledger.Movements.Count movimenti</p>}
+</details>
+<form method="post" asp-page-handler="Confirm"><input type="hidden" name="Ticket" value="@Model.Ticket" /><button class="btn btn-primary">Conferma e salva</button> <a href="" class="btn btn-outline-secondary">Annulla</a></form>
+</section>

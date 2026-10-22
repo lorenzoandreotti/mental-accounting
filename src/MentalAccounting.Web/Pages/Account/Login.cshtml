@@ -1,0 +1,12 @@
+@page
+@model MentalAccounting.Web.Pages.Account.LoginModel
+@{ ViewData["Title"] = "Accedi"; }
+<div class="login-panel mx-auto">
+<p class="eyebrow">IL TUO ACCANTONAMENTO</p><h1>Accedi</h1>
+<p class="text-secondary">Saldo, interessi e obiettivi, in un unico posto.</p>
+<form method="post" class="card card-body mt-4">
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<label asp-for="Username" class="form-label">Nome utente</label><input asp-for="Username" autocomplete="username" class="form-control mb-3" />
+<label asp-for="Password" class="form-label">Password</label><input asp-for="Password" autocomplete="current-password" class="form-control mb-4" />
+<button class="btn btn-primary">Accedi</button>
+</form></div>

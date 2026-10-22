@@ -1,0 +1,6 @@
+@page
+@model ErrorModel
+@{ViewData["Title"]="Operazione non riuscita";}
+<h1>Operazione non riuscita</h1><p>Non è stato possibile completare la richiesta. Riprova o verifica che il servizio sia disponibile.</p>
+@if(Model.ShowRequestId){<p>Riferimento: <code>@Model.RequestId</code></p>}
+<a asp-page="/Index" class="btn btn-primary">Torna alla panoramica</a>

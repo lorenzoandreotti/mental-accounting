@@ -1,0 +1,7 @@
+@page
+@model MentalAccounting.Web.Pages.InterestModel
+@{ViewData["Title"]="Interessi";}
+<p class="eyebrow">DAL CALCOLO ALL'ACCREDITO</p><h1>Interessi</h1>
+<form method="get" class="d-flex gap-2 align-items-end mb-4"><div><label asp-for="Through" class="form-label">Situazione alla data</label><input asp-for="Through" type="date" class="form-control"/></div><button class="btn btn-primary">Calcola</button></form>
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+@if(Model.Result is {} r){<partial name="_Calculation" model="r"/>}else{<p>Configura l'accantonamento o scegli una data valida.</p>}
